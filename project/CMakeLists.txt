@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 add_subdirectory(motor)
+add_subdirectory(accelerometer)
 
 if (NOT PICO_NO_HARDWARE)
 

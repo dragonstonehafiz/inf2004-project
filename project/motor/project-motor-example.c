@@ -40,10 +40,10 @@ void init_gpio()
 
 void irq_handler(uint gpio, uint32_t events)
 {
-    if (gpio == WHEEL_ENCODER_RIGHT_PIN)
-        irq_ir_sensor(WHEEL_ENCODER_RIGHT_PIN);
-    else if (gpio == BTN_1_PIN || gpio == BTN_2_PIN || gpio == BTN_3_PIN)
+    if (gpio == BTN_1_PIN || gpio == BTN_2_PIN || gpio == BTN_3_PIN)
         irq_btn(gpio);
+    else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
+        irq_ir_sensor(WHEEL_ENCODER_RIGHT_PIN);
 }
 
 void irq_btn(uint gpio)
