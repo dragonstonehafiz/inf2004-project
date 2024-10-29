@@ -22,9 +22,13 @@
 bool left_wheel_dir = true;
 bool right_wheel_dir = false;
 
+// PID Variables
+float Kp = 0.1, Ki = 0.01, Kd = 0.005;
+
 void init_motor();
 void setup_pwm(uint pwm_pin, float duty_cycle);
 void set_pwm_duty_cycle(uint pwm_pin, float duty_cycle);
+void update_pid();
 
 void init_motor()
 {
@@ -61,6 +65,24 @@ void setup_pwm(uint pwm_pin, float duty_cycle)
 void set_pwm_duty_cycle(uint pwm_pin, float duty_cycle) 
 {
     pwm_set_gpio_level(pwm_pin, (uint16_t)(duty_cycle * (PWM_WRAP + 1)));
+}
+float compute_pid(float *target_speed, float *current_speed, float *integral, float *prev_error)
+{
+    float error = *target_speed - *current_speed;
+    *integral += error;
+    float derivative = error - *prev_error;
+
+    duty_cycle += Kp * error + Ki * (*integral) + Kd * derivative;
+
+    // Clamp the duty cycle to the range [0, 1]
+    if (duty_cycle > 1.0) duty_cycle = 1.0;
+    else if (duty_cycle < 0) duty_cycle = 0;
+
+    // Update motor speed
+    set_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle);
+    set_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle);
+
+    *prev_error = error;
 }
 
 

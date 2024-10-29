@@ -9,6 +9,7 @@
 #define BTN_3_PIN 22
 
 uint8_t duty_cycle = 0;
+uint64_t last_time_r;
 
 void init_gpio();
 
@@ -19,9 +20,16 @@ void irq_btn(uint gpio);
 int main() 
 {
     init_gpio();
+
+    float target_speed = 25.f;
+    float integral = 0;
+    float prev_error = 0;
+
     while (true) 
     {
-        tight_loop_contents();
+        float current_speed = 10.5f;
+        // tight_loop_contents();
+        compute_pid(&target_speed, &current_speed, &integral, &prev_error);
     }
 }
 
