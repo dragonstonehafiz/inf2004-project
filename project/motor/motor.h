@@ -5,13 +5,13 @@
 #include "hardware/pwm.h"
 #include <stdio.h>
 
-#define WHEEL_RIGHT_PWN_PIN 2
-#define WHEEL_RIGHT_OUT_PIN_1 0
-#define WHEEL_RIGHT_OUT_PIN_2 1
+#define WHEEL_LEFT_PWN_PIN 10
+#define WHEEL_LEFT_OUT_PIN_1 8
+#define WHEEL_LEFT_OUT_PIN_2 9
 
-#define WHEEL_LEFT_PWN_PIN 8
-#define WHEEL_LEFT_OUT_PIN_1 6
-#define WHEEL_LEFT_OUT_PIN_2 7
+#define WHEEL_RIGHT_PWN_PIN 11
+#define WHEEL_RIGHT_OUT_PIN_1 2
+#define WHEEL_RIGHT_OUT_PIN_2 3
 
 #define CLOCK_FREQ 125000000
 #define PWM_WRAP 65535
@@ -20,7 +20,7 @@
 
 // true = clockwise
 bool left_wheel_dir = true;
-bool right_wheel_dir = false;
+bool right_wheel_dir = true;
 
 // PID Variables
 float Kp = 0.1, Ki = 0.01, Kd = 0.005;
@@ -28,7 +28,7 @@ float Kp = 0.1, Ki = 0.01, Kd = 0.005;
 void init_motor();
 void setup_pwm(uint pwm_pin, float duty_cycle);
 void set_pwm_duty_cycle(uint pwm_pin, float duty_cycle);
-void update_pid();
+void compute_pid(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error);
 
 void init_motor()
 {
@@ -66,21 +66,17 @@ void set_pwm_duty_cycle(uint pwm_pin, float duty_cycle)
 {
     pwm_set_gpio_level(pwm_pin, (uint16_t)(duty_cycle * (PWM_WRAP + 1)));
 }
-float compute_pid(float *target_speed, float *current_speed, float *integral, float *prev_error)
+void compute_pid(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error)
 {
-    float error = *target_speed - *current_speed;
+    float error = target_speed - current_speed;
     *integral += error;
     float derivative = error - *prev_error;
 
-    duty_cycle += Kp * error + Ki * (*integral) + Kd * derivative;
+    *duty_cycle += Kp * error + Ki * (*integral) + Kd * derivative;
 
     // Clamp the duty cycle to the range [0, 1]
-    if (duty_cycle > 1.0) duty_cycle = 1.0;
-    else if (duty_cycle < 0) duty_cycle = 0;
-
-    // Update motor speed
-    set_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle);
-    set_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle);
+    if (*duty_cycle > 1.0) *duty_cycle = 1.0;
+    else if (*duty_cycle < 0) *duty_cycle = 0;
 
     *prev_error = error;
 }

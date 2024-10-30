@@ -27,9 +27,8 @@ int main()
 
     while (true) 
     {
-        float current_speed = 10.5f;
-        // tight_loop_contents();
-        compute_pid(&target_speed, &current_speed, &integral, &prev_error);
+        tight_loop_contents();
+        // compute_pid(&target_speed, &current_speed, &integral, &prev_error);
     }
 }
 
@@ -69,7 +68,6 @@ void irq_btn(uint gpio)
         float duty_cycle_percent = duty_cycle / 101.f;
         set_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle_percent);
         set_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle_percent);
-        printf("Duty Cycle: %.2f\n", duty_cycle_percent);
     }
     else if (gpio == BTN_3_PIN) {
         right_wheel_dir = !right_wheel_dir;

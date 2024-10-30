@@ -29,3 +29,4 @@ endif()
 
 add_subdirectory(lab)
 add_subdirectory(project)
+add_subdirectory(week10)
