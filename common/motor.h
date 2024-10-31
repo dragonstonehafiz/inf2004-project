@@ -13,8 +13,6 @@ void set_motor_pwm_duty_cycle(uint pwm_pin, float duty_cycle);
 void set_motor_direction(uint out_pin_1, uint out_pin_2, bool clockwise);
 void set_motor_stop(uint out_pin_1, uint out_pin_2);
 
-void compute_wheel_duty_cycle(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error);
-
 void setup_motor(uint pwm_pin, uint out_pin_1, uint out_pin_2)
 {
     setup_motor_pwm(pwm_pin, 0.f);
@@ -55,22 +53,6 @@ void set_motor_stop(uint out_pin_1, uint out_pin_2)
 {
     gpio_put(out_pin_1, true);
     gpio_put(out_pin_2, true);
-}
-
-void compute_wheel_duty_cycle(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error)
-{
-    float error = target_speed - current_speed;
-    *integral += error;
-    float derivative = error - *prev_error;
-
-    // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
-    *duty_cycle += 0.1 * error + 0.01 * (*integral) + 0.005 * derivative;
-
-    // Clamp the duty cycle to the range [0, 1]
-    if (*duty_cycle > 1.0) *duty_cycle = 1.0;
-    else if (*duty_cycle < 0) *duty_cycle = 0;
-
-    *prev_error = error;
 }
 
 #endif
