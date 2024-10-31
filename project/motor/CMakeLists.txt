@@ -1,4 +1,4 @@
-add_executable(project-motor-example project-motor-example.c)
+add_executable(project-motor-example project-motor-example.c motor.c)
 
 target_include_directories(
     project-motor-example PRIVATE
