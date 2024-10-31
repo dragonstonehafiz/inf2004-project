@@ -6,10 +6,7 @@
 #include <stdio.h>
 #include "pins.h"
 
-#define CLOCK_FREQ 125000000
 #define PWM_WRAP 65535
-#define PWM_FREQ 25
-#define PWM_DIVIDER ((float)CLOCK_FREQ / (PWM_WRAP * PWM_FREQ))
 
 // PID Variables
 float Kp = 0.1, Ki = 0.01, Kd = 0.005;
@@ -53,12 +50,17 @@ void init_right_motor()
 
 void setup_pwm(uint pwm_pin, float duty_cycle) 
 {
+    // Calculate the PWM frequency and set the PWM wrap value
+    float clock_freq = 125000000.0f;  // Default Pico clock frequency in Hz
+    uint16_t freq = 25;
+    uint32_t divider = clock_freq / (freq * PWM_WRAP);  // Compute divider for given frequency
+
     // Set the GPIO function to PWM
     gpio_set_function(pwm_pin, GPIO_FUNC_PWM);
 
     // Find out which PWM slice is connected to the specified GPIO
     uint slice_num = pwm_gpio_to_slice_num(pwm_pin);
-    pwm_set_clkdiv(slice_num, PWM_DIVIDER);
+    pwm_set_clkdiv(slice_num, divider);
     pwm_set_wrap(slice_num, PWM_WRAP);
     pwm_set_gpio_level(pwm_pin, (uint16_t)(duty_cycle * (PWM_WRAP + 1)));
     set_pwm_duty_cycle(pwm_pin, duty_cycle);

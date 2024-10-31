@@ -10,7 +10,7 @@ target_link_libraries(project-motor-example pico_stdlib hardware_pwm)
 
 target_include_directories(project-motor-example PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}
-            ${CMAKE_CURRENT_LIST_DIR}/../common # for our common lwipopts
+            ${CMAKE_CURRENT_LIST_DIR}/../../common # for our common lwipopts
             ${PICO_LWIP_CONTRIB_PATH}/apps/ping
             )
 

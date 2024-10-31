@@ -13,7 +13,7 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         )
     target_include_directories(week10_station3 PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}
-            ${CMAKE_CURRENT_LIST_DIR}/../common # for our common lwipopts
+            ${CMAKE_CURRENT_LIST_DIR}/../../common # for our common lwipopts
             ${PICO_LWIP_CONTRIB_PATH}/apps/ping
             )
     target_link_libraries(week10_station3 
