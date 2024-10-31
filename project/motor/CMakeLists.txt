@@ -8,6 +8,12 @@ target_include_directories(
 # pull in common dependencies
 target_link_libraries(project-motor-example pico_stdlib hardware_pwm)
 
+target_include_directories(project-motor-example PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}
+            ${CMAKE_CURRENT_LIST_DIR}/../common # for our common lwipopts
+            ${PICO_LWIP_CONTRIB_PATH}/apps/ping
+            )
+
 # enable usb output, enable uart output
 pico_enable_stdio_usb(project-motor-example 1)
 pico_enable_stdio_uart(project-motor-example 1)
