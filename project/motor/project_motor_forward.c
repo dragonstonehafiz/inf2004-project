@@ -29,12 +29,12 @@ void init_gpio()
     init_wheels();
 
     gpio_set_irq_enabled_with_callback(BTN_20_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
-    gpio_set_irq_enabled_with_callback(BTN_21_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+    gpio_set_irq_enabled_with_callback(BTN_START, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
     gpio_set_irq_enabled_with_callback(BTN_22_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
 }
 void irq_handler(uint gpio, uint32_t events)
 {
-    if (gpio == BTN_20_PIN || gpio == BTN_21_PIN || gpio == BTN_22_PIN)
+    if (gpio == BTN_20_PIN || gpio == BTN_START || gpio == BTN_22_PIN)
         irq_btn(gpio);
 }
 void irq_btn(uint gpio)
@@ -43,7 +43,7 @@ void irq_btn(uint gpio)
     {
         set_car_state(CAR_FORWARD);
     }
-    else if (gpio == BTN_21_PIN) 
+    else if (gpio == BTN_START) 
     {
         if (duty_cycle >= 1.f)
             duty_cycle = 0.f;

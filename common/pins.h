@@ -9,4 +9,7 @@
 #define WHEEL_RIGHT_OUT_PIN_1 2
 #define WHEEL_RIGHT_OUT_PIN_2 3
 
+#define WHEEL_ENCODER_RIGHT_PIN 0
+#define WHEEL_ENCODER_LEFT_PIN 26
+
 #endif

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "wheels.h"
 
-#define BTN_21_PIN 21
+#define BTN_START 21
 
 // Variables for tracking what step of the test we are at
 enum STATION_1_STATE
@@ -22,7 +22,7 @@ struct repeating_timer pid_timer;
 struct repeating_timer ultrasonic_timer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
 bool ultrasonic_sensor_callback(struct repeating_timer *t);
-int64_t wheel_encoder_callback(alarm_id_t id, void* user_data);
+
 
 void change_state(uint8_t next_state)
 {
@@ -49,6 +49,7 @@ void change_state(uint8_t next_state)
 }
 
 void init_gpio();
+void init_interrupts();
 void irq_handler(uint gpio, uint32_t events);
 
 int main() 
@@ -63,15 +64,27 @@ void init_gpio()
 {
     stdio_init_all();
     init_wheels();
-
-    gpio_set_irq_enabled_with_callback(BTN_21_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+}
+void init_interrupts()
+{
+    gpio_set_irq_enabled_with_callback(BTN_START, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+    gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_RIGHT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+    gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_LEFT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
 }
 void irq_handler(uint gpio, uint32_t events)
 {
-    if (gpio == BTN_21_PIN)
+    if (gpio == BTN_START)
     {
         if (station1_state == STATION_1_STATIONARY)
             change_state(STATION_1_FIRST_PART);
+    }
+    else if (gpio == WHEEL_ENCODER_LEFT_PIN)
+    {
+        
+    }
+    else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
+    {
+        
     }
 }
 
@@ -91,8 +104,4 @@ bool ultrasonic_sensor_callback(struct repeating_timer *t)
         cancel_repeating_timer(&ultrasonic_timer);
     }
     return true;
-}
-int64_t wheel_encoder_callback(alarm_id_t id, void* user_data)
-{
-    
 }
