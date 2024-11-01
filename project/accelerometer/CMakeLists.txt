@@ -5,6 +5,11 @@ add_executable(mpu6050_i2c
 # pull in common dependencies and additional i2c hardware support
 target_link_libraries(mpu6050_i2c pico_stdlib hardware_i2c)
 
+target_include_directories(mpu6050_i2c PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}
+            ${CMAKE_CURRENT_LIST_DIR}/../../common
+            )
+
 # create map/bin/hex file etc.
 pico_add_extra_outputs(mpu6050_i2c)
 

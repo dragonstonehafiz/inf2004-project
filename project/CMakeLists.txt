@@ -4,6 +4,8 @@ add_subdirectory(motor)
 add_subdirectory(motor_turning)
 add_subdirectory(accelerometer)
 add_subdirectory(wheel_encoder_test)
+add_subdirectory(ultrasonic)
+add_subdirectory(encoder)
 
 if (NOT PICO_NO_HARDWARE)
 
