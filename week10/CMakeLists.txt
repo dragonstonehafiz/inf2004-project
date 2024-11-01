@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
+add_subdirectory(station1)
+add_subdirectory(station2)
 
 if (NOT PICO_NO_HARDWARE)
 
@@ -6,8 +8,8 @@ if (NOT PICO_NO_HARDWARE)
         message("Skipping Pico W FreeRTOS examples as FREERTOS_KERNEL_PATH not defined")
     else()
         include(FreeRTOS_Kernel_import.cmake)
-        add_subdirectory(station1)
-        add_subdirectory(station2)
+        # add_subdirectory(station1)
+        # add_subdirectory(station2)
         add_subdirectory(station3_controller)
         add_subdirectory(station3_reciever)
     endif()
