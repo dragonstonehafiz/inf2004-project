@@ -1,7 +1,7 @@
 add_executable(encoder encoder.c)
 
 # Link to common dependencies such as the standard Pico SDK library, GPIO, and Timer
-target_link_libraries(encoder pico_stdlib hardware_timer hardware_gpio hardware_pwm)
+target_link_libraries(encoder pico_stdlib hardware_timer hardware_gpio)
 
 # Enable USB-based stdio for this project (for printf over USB)
 pico_enable_stdio_usb(encoder 1)
