@@ -2,8 +2,11 @@
 #include "hardware/pwm.h"
 #include <stdio.h>
 #include "wheels.h"
+#include "ultrasonic.h"
+#include "encoder.h"
 
 #define BTN_START 21
+#define ANGLE_TO_TURN 90
 
 // Variables for tracking what step of the test we are at
 enum STATION_1_STATE
@@ -23,6 +26,9 @@ struct repeating_timer ultrasonic_timer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
 bool ultrasonic_sensor_callback(struct repeating_timer *t);
 
+// For turning task
+// This is how much the left wheel needs to turn when 
+float distToTurn = 0.f;
 
 void change_state(uint8_t next_state)
 {
@@ -39,7 +45,8 @@ void change_state(uint8_t next_state)
         case STATION_1_TURN:
             station1_state = STATION_1_TURN;
             cancel_repeating_timer(&ultrasonic_timer);
-            set_car_state(CAR_STATIONARY);
+            set_car_state(CAR_TURN_RIGHT);
+            distToTurn = (float)ANGLE_TO_TURN / 360.f;
             break;
         case STATION_1_90_CM:
             // Move the car forward at max speed
@@ -64,6 +71,7 @@ void init_gpio()
 {
     stdio_init_all();
     init_wheels();
+    setupUltrasonicPins();
 }
 void init_interrupts()
 {
@@ -78,13 +86,13 @@ void irq_handler(uint gpio, uint32_t events)
         if (station1_state == STATION_1_STATIONARY)
             change_state(STATION_1_FIRST_PART);
     }
-    else if (gpio == WHEEL_ENCODER_LEFT_PIN)
+    else if (gpio == WHEEL_ENCODER_LEFT_PIN && gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
-        
-    }
-    else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
-    {
-        
+        encoderCallback(gpio, events);
+        if (station1_state == STATION_1_TURN && leftTotalDistance >= distToTurn)
+            change_state(STATION_1_90_CM);
+        else if (station1_state == STATION_1_90_CM && leftTotalDistance >= 90)
+            change_state(STATION_1_STATIONARY)
     }
 }
 
@@ -94,8 +102,8 @@ bool ultrasonic_sensor_callback(struct repeating_timer *t)
     // stop this timer (because we have no reason to check distance otherwise)
     if (station1_state == STATION_1_FIRST_PART)
     {
-        float distance_to_item = 25.f; // = INSERT CODE HERE 
-        if (distance_to_item <= 10.f)
+        float distance_to_item = getCm();
+        if (distance_to_item <= 10.f && distance_to_item > 0.0f)
             change_state(STATION_1_TURN);
     }
     else 

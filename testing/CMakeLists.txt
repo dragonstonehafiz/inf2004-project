@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.12)
+
+add_subdirectory(motor_forward)
+add_subdirectory(motor_turning)
+add_subdirectory(wheel_encoder_distance)
+add_subdirectory(wheel_encoder_rotation)
