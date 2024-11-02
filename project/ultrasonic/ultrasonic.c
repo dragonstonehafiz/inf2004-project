@@ -1,10 +1,13 @@
 #include "ultrasonic.h"  
 
+// Distance threshold for the buzzer activation in centimeters
+#define DISTANCE_THRESHOLD_CM 10.0
+
 int main() {
     stdio_init_all();  
 
-    setupUltrasonicPins(TRIG_PIN, ECHO_PIN);
-    setupBuzzerPin();   
+    setupUltrasonicPins();
+    setupBuzzerPin();
 
     uint64_t last_distance_check_time = time_us_64();  
     while (1) {

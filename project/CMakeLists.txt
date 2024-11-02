@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-add_subdirectory(motor)
-add_subdirectory(motor_turning)
 add_subdirectory(accelerometer)
-add_subdirectory(wheel_encoder_test)
 add_subdirectory(ultrasonic)
 add_subdirectory(encoder)
 

@@ -5,12 +5,10 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
+#include "pins.h"
 
-// Definitions for encoder GPIO pins and constants for calculations
-#define LEFT_ENCODER_PIN 0        
-#define RIGHT_ENCODER_PIN 2        
-#define CM_PER_NOTCH 1.005  
-#define TIMEOUT_THRESHOLD 1500000   
+#define CM_PER_NOTCH 1.005
+#define TIMEOUT_THRESHOLD 1500000
 
 static int leftStopCounter = 0;
 static int rightStopCounter = 0;
@@ -27,6 +25,9 @@ volatile double rightTotalDistance = 0.0;
 volatile uint64_t rightLastNotchTime = 0;
 volatile double rightEncoderSpeed = 0.0;
 
+volatile float leftPulseWidth = 0.0;
+volatile float rightPulseWidth = 0.0;
+
 // Function to print current encoder data for both wheels
 static inline void printEncoderData(void) {
     printf("Left Wheel - Notch Count: %u, Distance: %.4f cm, Speed: %.4f cm/s\n",
@@ -36,30 +37,36 @@ static inline void printEncoderData(void) {
 }
 
 // Combined encoder callback to handle both left and right encoder interrupts
-static inline void encoderCallback(uint gpio, uint32_t events) {
+void encoderCallback(uint gpio, uint32_t events) {
     uint64_t currentTime = time_us_64();
 
-    if (gpio == LEFT_ENCODER_PIN) {
-        // Increment the count of notches detected for the left wheel
-        leftNotchCount++;
-        leftTotalDistance = (double)leftNotchCount * CM_PER_NOTCH;
-        
+    if (gpio == WHEEL_ENCODER_LEFT_PIN) {
         // Calculate time difference and speed for the left wheel
         uint64_t timeDiff = currentTime - leftLastNotchTime;
-        if (timeDiff > 0) {
-            leftEncoderSpeed = CM_PER_NOTCH * 1e6 / timeDiff;
+        if (timeDiff > 0 && timeDiff < TIMEOUT_THRESHOLD) {           
+            // Increment the count of notches detected for the left wheel
+            leftNotchCount++;
+            leftTotalDistance = (double)leftNotchCount * CM_PER_NOTCH;
+            leftEncoderSpeed = CM_PER_NOTCH / (timeDiff / 1e6);
+            leftPulseWidth = timeDiff / 1e6;
+        } else {
+            leftEncoderSpeed = 0.0;
         }
 
         leftLastNotchTime = currentTime;
-    } else if (gpio == RIGHT_ENCODER_PIN) {
-        // Increment the count of notches detected for the right wheel
-        rightNotchCount++;
-        rightTotalDistance = (double)rightNotchCount * CM_PER_NOTCH;
+    } else if (gpio == WHEEL_ENCODER_RIGHT_PIN) {
 
         // Calculate time difference and speed for the right wheel
+        // If time diff is larger than acceptable threshold, assume right encoder was stopped
         uint64_t timeDiff = currentTime - rightLastNotchTime;
-        if (timeDiff > 0) {
-            rightEncoderSpeed = CM_PER_NOTCH * 1e6 / timeDiff;
+        if (timeDiff > 0  && timeDiff < TIMEOUT_THRESHOLD) {     
+            // Increment the count of notches detected for the right wheel
+            rightNotchCount++;
+            rightTotalDistance = (double)rightNotchCount * CM_PER_NOTCH;
+            rightEncoderSpeed = CM_PER_NOTCH / (timeDiff / 1e6);
+            rightPulseWidth = timeDiff / 1e6;
+        } else {
+            rightEncoderSpeed = 0.0;
         }
 
         rightLastNotchTime = currentTime;
@@ -67,7 +74,7 @@ static inline void encoderCallback(uint gpio, uint32_t events) {
 }
 
 // Function to check if the car has stopped and set speed to zero if no movement
-static inline void checkIfStopped() {
+void checkIfStopped() {
     uint64_t currentTime = time_us_64();
 
     if (currentTime - leftLastNotchTime > TIMEOUT_THRESHOLD) {
@@ -93,16 +100,12 @@ static inline void checkIfStopped() {
 }
 
 // Setup function for the encoder pins and interrupts
-static inline void setupEncoderPins() {
-    gpio_init(LEFT_ENCODER_PIN);
-    gpio_set_dir(LEFT_ENCODER_PIN, GPIO_IN);
+void setupEncoderPins() {
+    gpio_init(WHEEL_ENCODER_LEFT_PIN);
+    gpio_set_dir(WHEEL_ENCODER_LEFT_PIN, GPIO_IN);
 
-    gpio_init(RIGHT_ENCODER_PIN);
-    gpio_set_dir(RIGHT_ENCODER_PIN, GPIO_IN);
-
-    // Set up interrupts for both encoder pins with a single callback
-    gpio_set_irq_enabled_with_callback(LEFT_ENCODER_PIN, GPIO_IRQ_EDGE_RISE, true, &encoderCallback);
-    gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_PIN, GPIO_IRQ_EDGE_RISE, true, &encoderCallback);
+    gpio_init(WHEEL_ENCODER_RIGHT_PIN);
+    gpio_set_dir(WHEEL_ENCODER_RIGHT_PIN, GPIO_IN);
 }
 
 #endif
