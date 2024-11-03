@@ -34,7 +34,6 @@ void reset_ir_sensor_status()
 {
     idx = 0;
     pulse_start = 0;
-
     memset(bar_space_widths, 0, sizeof(bar_space_widths));
 }
 
@@ -65,7 +64,7 @@ Transaction barcode_transaction;
 
 void create_barcode_transaction(uint gpio, uint32_t events)
 {
-    barcode_transaction.state = (events & GPIO_IRQ_EDGE_RISE) ? BLACK_DETECTED : WHITE_DETECTED;
+    barcode_transaction.state = (events & GPIO_IRQ_EDGE_RISE) ? WHITE_DETECTED : BLACK_DETECTED;
     barcode_transaction.state_change = true;
     barcode_transaction.state_change_time = time_us_32();
 }
@@ -111,11 +110,11 @@ void handle_line_tracing(MovementCallback callback)
 
     if (line_tracing_transaction.state == BLACK_DETECTED)
     {
-        return callback(CAR_TURN_LEFT_AND_FORWARD);
+        return callback(CAR_TURN_RIGHT_AND_FORWARD);
     }
     else if (line_tracing_transaction.state == WHITE_DETECTED)
     {
-        return callback(CAR_TURN_RIGHT_AND_FORWARD);
+        return callback(CAR_TURN_LEFT_AND_FORWARD);
     }
 }
 

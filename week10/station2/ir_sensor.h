@@ -8,7 +8,7 @@
 #define IR_THRESHOLD 1.5f
 #define IR_SENSOR_PIN 6     // Analog pin for IR sensor
 #define PULSE_PIN_BARCODE 7 // Digital pin for pulse detection
-#define PIN_LINE_TRACING 8
+#define PIN_LINE_TRACING 5
 #define WIDE_FACTOR 2.5f
 #define PULSE_WIDTH_THRESHOLD 1000   // 0.1 second threshold for pulse width debounce
 #define TIMEOUT_THRESHOLD_US 2000000 // 1-second timeout threshold in microseconds
@@ -31,4 +31,5 @@ void handle_line_tracing(void (*callback)(uint8_t movement_state));
 void create_barcode_transaction(unsigned int gpio, uint32_t events);
 void handle_barcode(void);
 
+void reset_ir_sensor_status(void);
 #endif // IR_SENSOR_H
