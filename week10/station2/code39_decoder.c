@@ -19,7 +19,7 @@ char decode_code39_character(int64_t widths[])
 {
     char pattern[BYTES_LENGTH + 1] = {0};
 
-    classify_mean_std(widths, BYTES_LENGTH, pattern, 0.3);
+    classify_mean_std(widths, BYTES_LENGTH, pattern, 0.5);
     pattern[BYTES_LENGTH] = '\0';
 
     printf("Pattern: %s\n", pattern);
