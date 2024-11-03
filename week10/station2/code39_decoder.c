@@ -15,17 +15,14 @@ const char *code39_encoding[] = {
     "110000001", "011000001", "111000000", "010010001", "110010000",
     "011010000", "010010100"};
 
-char decode_code39_character(int64_t widths[], int64_t narrow_width)
+char decode_code39_character(int64_t widths[])
 {
     char pattern[BYTES_LENGTH + 1] = {0};
 
-    // for (int i = 0; i < BYTES_LENGTH; i++)
-    //     pattern[i] = is_wide(widths[i], narrow_width) ? '1' : '0';
-
-    classify_mean_std(widths, BYTES_LENGTH, pattern, 0.5);
+    classify_mean_std(widths, BYTES_LENGTH, pattern, 0.3);
     pattern[BYTES_LENGTH] = '\0';
 
-    // printf("W: %lld, Pattern: %s\n", narrow_width, pattern);
+    printf("Pattern: %s\n", pattern);
 
     size_t encoding_count = sizeof(code39_encoding) / sizeof(code39_encoding[0]);
     for (size_t i = 0; i < encoding_count; i++)
@@ -39,12 +36,11 @@ char decode_code39_character(int64_t widths[], int64_t narrow_width)
     return '?';
 }
 
-int decode_code39_sequence(int64_t widths[], int64_t narrow_width, char *output)
+int decode_code39_sequence(int64_t widths[], char *output)
 {
     size_t output_index = 0;
 
-    char start_char = decode_code39_character(&widths[0], narrow_width);
-    // char end_char = decode_code39_character(&widths[MAX_BARCODE_LENGTH - BYTES_LENGTH], narrow_width);
+    char start_char = decode_code39_character(&widths[0]);
 
     if (start_char != '*')
     {
@@ -52,7 +48,7 @@ int decode_code39_sequence(int64_t widths[], int64_t narrow_width, char *output)
         return 0;
     }
 
-    char decoded_char = decode_code39_character(&widths[BYTES_LENGTH + 1], narrow_width);
+    char decoded_char = decode_code39_character(&widths[BYTES_LENGTH + 1]);
     output[output_index++] = decoded_char;
 
     output[output_index] = '\0'; // Null-terminate the output string
@@ -70,7 +66,7 @@ void reverse_widths(int64_t *widths, int length)
     }
 }
 
-int decode_with_direction_check(int64_t *widths, int64_t narrow_width)
+int decode_with_direction_check(int64_t *widths)
 {
     print_bar_space_widths(widths, MAX_BARCODE_LENGTH);
 
@@ -78,7 +74,7 @@ int decode_with_direction_check(int64_t *widths, int64_t narrow_width)
     char decoded_reversed[2];
 
     // Try decoding in normal order
-    if (decode_code39_sequence(widths, narrow_width, decoded_normal))
+    if (decode_code39_sequence(widths, decoded_normal))
     {
         printf("Decoded barcode (Normal): %s\n", decoded_normal);
         return 1;
@@ -87,7 +83,7 @@ int decode_with_direction_check(int64_t *widths, int64_t narrow_width)
     // Reverse widths and try decoding in reverse order
     reverse_widths(widths, MAX_BARCODE_LENGTH);
 
-    if (decode_code39_sequence(widths, narrow_width, decoded_reversed))
+    if (decode_code39_sequence(widths, decoded_reversed))
     {
         printf("Decoded barcode (Reversed): %s\n", decoded_reversed);
         return 1;

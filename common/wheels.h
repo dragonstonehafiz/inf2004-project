@@ -11,7 +11,8 @@ enum CAR_STATE
     CAR_BACKWARD,
     CAR_TURN_RIGHT,
     CAR_TURN_LEFT,
-
+    CAR_TURN_LEFT_FORWARD,
+    CAR_TURN_RIGHT_FORWARD,
     NUM_CAR_STATES
 };
 
@@ -25,8 +26,8 @@ typedef struct PID_VAR
     bool turning; // this flag is used to make sure we don't try to change duty cycle if wheel is idle
 } PID_VAR;
 // Variables for controling pid speed
-PID_VAR pid_left = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle =  0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
-PID_VAR pid_right = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle =  0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
+PID_VAR pid_left = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
+PID_VAR pid_right = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
 
 /// @brief initializes all pins and pwm for both motors
 void init_wheels();
@@ -61,42 +62,60 @@ void set_car_state(uint8_t nextState)
 {
     switch (nextState)
     {
-        case CAR_STATIONARY:
-            set_motor_stop(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2);
-            set_motor_stop(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2);
-            pid_left.turning = false;
-            pid_right.turning = false;
-            break;
-        case CAR_FORWARD:
-            // When moving forward, right wheel is clockwise, left wheel is counter clockwise
-            set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
-            set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
-            pid_left.turning = true;
-            pid_right.turning = true;
-            break;
-        case CAR_BACKWARD:
-            // When moving forward, right wheel is counter clockwise, left wheel is clockwise
-            set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, true);
-            set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, false);
-            pid_left.turning = true;
-            pid_right.turning = true;
-            break;
-        case CAR_TURN_RIGHT:
-            // When turning right, right wheel is stationary, left wheel is counter clockwise
-            set_motor_stop(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2);
-            set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
-            pid_left.turning = true;
-            pid_right.turning = false;
-            break;
-        case CAR_TURN_LEFT:
-            // When turning right, left wheel is stationary, right wheel is clockwise
-            set_motor_stop(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2);
-            set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
-            pid_left.turning = false;
-            pid_right.turning = true;
-            break;
-        default:
-            break;
+    case CAR_STATIONARY:
+        set_motor_stop(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2);
+        set_motor_stop(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2);
+        pid_left.turning = false;
+        pid_right.turning = false;
+        break;
+    case CAR_FORWARD:
+        // When moving forward, right wheel is clockwise, left wheel is counter clockwise
+        set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
+        set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
+        pid_left.turning = true;
+        pid_right.turning = true;
+        break;
+    case CAR_BACKWARD:
+        // When moving forward, right wheel is counter clockwise, left wheel is clockwise
+        set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, true);
+        set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, false);
+        pid_left.turning = true;
+        pid_right.turning = true;
+        break;
+    case CAR_TURN_RIGHT:
+        // When turning right, right wheel is stationary, left wheel is counter clockwise
+        set_motor_stop(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2);
+        set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
+        pid_left.turning = true;
+        pid_right.turning = false;
+        break;
+    case CAR_TURN_LEFT:
+        // When turning right, left wheel is stationary, right wheel is clockwise
+        set_motor_stop(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2);
+        set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
+        pid_left.turning = false;
+        pid_right.turning = true;
+        break;
+    case CAR_TURN_LEFT_FORWARD:
+        set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
+        set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
+        pid_left.turning = true;
+        pid_right.turning = true;
+        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.3f);
+        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.5f);
+
+        break;
+    case CAR_TURN_RIGHT_FORWARD:
+        set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
+        set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
+        pid_left.turning = true;
+        pid_right.turning = true;
+        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.5f);
+        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.3f);
+
+        break;
+    default:
+        break;
     }
 }
 void set_wheels_duty_cycle(float dutyCycle)
@@ -123,8 +142,10 @@ void compute_wheel_duty_cycle(float target_speed, float current_speed, float *du
     *duty_cycle += 0.1 * error + 0.01 * (*integral) + 0.005 * derivative;
 
     // Clamp the duty cycle to the range [0, 1]
-    if (*duty_cycle > 1.0) *duty_cycle = 1.0;
-    else if (*duty_cycle < 0) *duty_cycle = 0;
+    if (*duty_cycle > 1.0)
+        *duty_cycle = 1.0;
+    else if (*duty_cycle < 0)
+        *duty_cycle = 0;
 
     *prev_error = error;
 }
@@ -133,7 +154,7 @@ bool pid_timer_callback(struct repeating_timer *t)
     // calculate the new duty cycle of the left wheel
     compute_wheel_duty_cycle(pid_left.target_speed, pid_left.current_speed, &pid_left.duty_cycle, &pid_left.integral, &pid_left.prev_error);
     set_left_wheel_duty_cycle(pid_left.duty_cycle);
-    // 
+    //
     compute_wheel_duty_cycle(pid_right.target_speed, pid_right.current_speed, &pid_right.duty_cycle, &pid_right.integral, &pid_right.prev_error);
     set_right_wheel_duty_cycle(pid_right.duty_cycle);
     return true;
