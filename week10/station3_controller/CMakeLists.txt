@@ -17,7 +17,7 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
             ${PICO_LWIP_CONTRIB_PATH}/apps/ping
             )
     target_link_libraries(week10_station3_controller 
-        pico_stdlib hardware_adc
+        pico_stdlib hardware_adc hardware_i2c
         pico_cyw43_arch_lwip_sys_freertos
         pico_lwip_iperf
         FreeRTOS-Kernel-Heap4 # FreeRTOS kernel and dynamic heap
