@@ -103,7 +103,6 @@ void set_car_state(uint8_t nextState)
         pid_right.turning = true;
         set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.3f);
         set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.5f);
-
         break;
     case CAR_TURN_RIGHT_FORWARD:
         set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
@@ -112,7 +111,6 @@ void set_car_state(uint8_t nextState)
         pid_right.turning = true;
         set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.5f);
         set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.3f);
-
         break;
     default:
         break;

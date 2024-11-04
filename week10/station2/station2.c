@@ -59,7 +59,7 @@ void irq_btn(uint gpio)
 {
     if (gpio == BTN_20_PIN)
     {
-        set_car_state(CAR_TURN_LEFT_FORWARD);
+        set_car_state(CAR_FORWARD);
     }
     else if (gpio == BTN_START)
     {
