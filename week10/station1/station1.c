@@ -8,17 +8,17 @@
 #define BTN_START 21
 #define ANGLE_TO_TURN 90
 
+bool test_active = false;
+/// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
+void change_state(uint8_t next_state);
 // Variables for tracking what step of the test we are at
 enum STATION_1_STATE
 {
-    STATION_1_STATIONARY = 0,
-    STATION_1_FIRST_PART, // Moving until object found 10cm away
+    STATION_1_FIRST_PART = 0, // Moving until object found 10cm away
     STATION_1_TURN, // Turn 90 degrees to the right
     STATION_1_90_CM // Move forward 90cm in 5 seconds
 };
-uint8_t station1_state = STATION_1_STATIONARY;
-/// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
-void change_state(uint8_t next_state);
+uint8_t station1_state = STATION_1_FIRST_PART;
 
 // Timer variables and functions to manage polling of devices
 struct repeating_timer pid_timer;
@@ -33,12 +33,13 @@ float distToTurn = 0.f;
 void change_state(uint8_t next_state)
 {
     station1_state = next_state;
+    test_active = false;
+    set_wheels_duty_cycle(0.f);
     switch (next_state)
     {
         case STATION_1_FIRST_PART:
             // Move the car forward at max speed
             set_car_state(CAR_FORWARD);
-            set_wheels_duty_cycle(1.f);
             // Start timer
             add_repeating_timer_ms(250, ultrasonic_sensor_callback, NULL, &ultrasonic_timer);
             break;
@@ -51,7 +52,6 @@ void change_state(uint8_t next_state)
         case STATION_1_90_CM:
             // Move the car forward at max speed
             set_car_state(CAR_FORWARD);
-            set_wheels_duty_cycle(1.f);
     }
 }
 
@@ -62,6 +62,7 @@ void irq_handler(uint gpio, uint32_t events);
 int main() 
 {
     init_gpio();
+    change_state(STATION_1_FIRST_PART);
 
     while (true) 
         tight_loop_contents();
@@ -83,8 +84,11 @@ void irq_handler(uint gpio, uint32_t events)
 {
     if (gpio == BTN_START)
     {
-        if (station1_state == STATION_1_STATIONARY)
-            change_state(STATION_1_FIRST_PART);
+        if (!test_active)
+        {
+            set_wheels_duty_cycle(1.f);
+            test_active = true;
+        }
     }
     else if (gpio == WHEEL_ENCODER_LEFT_PIN && gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
@@ -92,7 +96,7 @@ void irq_handler(uint gpio, uint32_t events)
         if (station1_state == STATION_1_TURN && leftTotalDistance >= distToTurn)
             change_state(STATION_1_90_CM);
         else if (station1_state == STATION_1_90_CM && leftTotalDistance >= 90)
-            change_state(STATION_1_STATIONARY)
+            change_state(STATION_1_90_CM);
     }
 }
 
