@@ -37,7 +37,7 @@ uint64_t getPulse()
     uint64_t startWait = time_us_64();
     while (gpio_get(ECHO_PIN) == 0) {
         if (time_us_64() - startWait > 30000) {
-            return 0;  
+            return 0;
         }
     }
 
@@ -54,7 +54,7 @@ uint64_t getPulse()
 
 float getCm()
 {
-    uint64_t pulseLength = getPulse(TRIG_PIN, ECHO_PIN);
+    uint64_t pulseLength = getPulse();
     if (pulseLength == 0) return -1.0;  
     return (float)pulseLength / 29.0 / 2.0; 
 }

@@ -12,7 +12,7 @@
 #define WHEEL_RIGHT_OUT_PIN_2 3
 
 #define BUZZER_PIN 18
-#define TRIG_PIN 2
-#define ECHO_PIN 3
+#define TRIG_PIN 14
+#define ECHO_PIN 13
 
 #endif
