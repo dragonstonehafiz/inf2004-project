@@ -15,21 +15,14 @@ const char *code39_encoding[] = {
     "110000001", "011000001", "111000000", "010010001", "110010000",
     "011010000", "010010100"};
 
-char decode_code39_character(int64_t widths[])
+char decode_code39_character(char chunk[], int length)
 {
-    char pattern[BYTES_LENGTH + 1] = {0};
-
-    classify_mean_std(widths, BYTES_LENGTH, pattern, 0.5);
-    pattern[BYTES_LENGTH] = '\0';
-
-    printf("Pattern: %s\n", pattern);
-
     size_t encoding_count = sizeof(code39_encoding) / sizeof(code39_encoding[0]);
     for (size_t i = 0; i < encoding_count; i++)
     {
-        if (strcmp(pattern, code39_encoding[i]) == 0)
+        if (strncmp(chunk, code39_encoding[i], length) == 0)
         {
-            printf("Decoded character: %c\n", code39_chars[i]);
+            // printf("Decoded character: %c\n", code39_chars[i]);
             return code39_chars[i];
         }
     }
@@ -40,15 +33,23 @@ int decode_code39_sequence(int64_t widths[], char *output)
 {
     size_t output_index = 0;
 
-    char start_char = decode_code39_character(&widths[0]);
+    char pattern[MAX_BARCODE_LENGTH + 1] = {0};
+
+    classify_mean_std(widths, MAX_BARCODE_LENGTH, pattern, 0.3f);
+
+    pattern[MAX_BARCODE_LENGTH] = '\0';
+
+    // printf("Pattern: %s\n", pattern);
+
+    char start_char = decode_code39_character(&pattern[0], BYTES_LENGTH);
 
     if (start_char != '*')
     {
-        printf("Invalid start character. %c\n", start_char);
+        // printf("Invalid start character. %c\n", start_char);
         return 0;
     }
 
-    char decoded_char = decode_code39_character(&widths[BYTES_LENGTH + 1]);
+    char decoded_char = decode_code39_character(&pattern[BYTES_LENGTH + 1], BYTES_LENGTH);
     output[output_index++] = decoded_char;
 
     output[output_index] = '\0'; // Null-terminate the output string
@@ -68,7 +69,7 @@ void reverse_widths(int64_t *widths, int length)
 
 int decode_with_direction_check(int64_t *widths)
 {
-    print_bar_space_widths(widths, MAX_BARCODE_LENGTH);
+    // print_bar_space_widths(widths, MAX_BARCODE_LENGTH);
 
     char decoded_normal[2];
     char decoded_reversed[2];

@@ -35,13 +35,7 @@ void reset_ir_sensor_status()
     idx = 0;
     pulse_start = 0;
     memset(bar_space_widths, 0, sizeof(bar_space_widths));
-}
-
-void record_segment_callback(uint32_t pulse_width, const char *segment_type)
-{
-    bar_space_widths[idx++] = pulse_width;
-
-    printf("Recorded %s segment: %d\n", segment_type, pulse_width);
+    cancel_repeating_timer(&timer);
 }
 
 bool inactivity_timeout_callback()
@@ -73,21 +67,24 @@ void handle_barcode()
 {
     if (!barcode_transaction.state_change)
         return;
+
     barcode_transaction.state_change = false;
+
     uint32_t current_time = barcode_transaction.state_change_time;
     uint32_t pulse_width = current_time - pulse_start;
+
+    if (pulse_width < PULSE_WIDTH_THRESHOLD)
+        return;
 
     // Reset inactivity timer on every transition
     cancel_repeating_timer(&timer);
     add_repeating_timer_us(TIMEOUT_THRESHOLD_US, inactivity_timeout_callback, NULL, &timer);
 
-    if (pulse_width > PULSE_WIDTH_THRESHOLD)
-    {
-        if ((barcode_transaction.state == BLACK_DETECTED && idx > 0) ||
-            (barcode_transaction.state == WHITE_DETECTED && pulse_start > 0))
-            bar_space_widths[idx++] = pulse_width;
-        pulse_start = current_time;
-    }
+    if ((barcode_transaction.state == BLACK_DETECTED && idx > 0) ||
+        (barcode_transaction.state == WHITE_DETECTED && pulse_start != 0))
+        bar_space_widths[idx++] = pulse_width;
+
+    pulse_start = current_time;
 }
 
 typedef void (*MovementCallback)(uint8_t movement_state);

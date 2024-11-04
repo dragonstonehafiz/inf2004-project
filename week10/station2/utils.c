@@ -6,34 +6,41 @@
 
 void print_bar_space_widths(int64_t *widths, int count)
 {
-    // printf("Stored bar_space_widths:\n");
     for (int i = 0; i < count; i++)
     {
-        // printf("%lld ", widths[i]);
+        printf("%lld ", widths[i]);
     }
-    // printf("\n");
+    printf("\n");
 }
 
 // Function to calculate mean
 double calculate_mean(int64_t arr[], int size)
 {
     double sum = 0.0;
+    int empty_bytes_count = 0;
     for (int i = 0; i < size; i++)
     {
         sum += arr[i];
+        if (arr[i] <= 0)
+            empty_bytes_count += 1;
     }
-    return sum / size;
+
+    return sum / (size - empty_bytes_count);
 }
 
 // Function to calculate standard deviation
 double calculate_std_dev(int64_t arr[], int size, double mean)
 {
     double sum = 0.0;
+    int empty_bytes_count = 0;
     for (int i = 0; i < size; i++)
     {
-        sum += pow(arr[i] - mean, 2);
+        if (arr[i] > 0)
+            sum += pow(arr[i] - mean, 2);
+        else
+            empty_bytes_count += 1;
     }
-    return sqrt(sum / size);
+    return sqrt(sum / (size - empty_bytes_count));
 }
 
 // Function to calculate median
@@ -75,6 +82,7 @@ double calculate_median(int64_t arr[], int size)
 void classify_mean(int64_t arr[], int size, char result[])
 {
     double mean = calculate_mean(arr, size);
+    // printf("mean: %f", mean);
     for (int i = 0; i < size; i++)
     {
         result[i] = arr[i] > mean ? '1' : '0';
@@ -97,6 +105,7 @@ void classify_mean_std(int64_t arr[], int size, char result[], double factor)
     double mean = calculate_mean(arr, size);
     double std_dev = calculate_std_dev(arr, size, mean);
     double threshold = mean + factor * std_dev;
+    // printf("Mean: %f, Std Dev: %f, Threshold: %f\n", mean, std_dev, threshold);
     for (int i = 0; i < size; i++)
     {
         result[i] = arr[i] > threshold ? '1' : '0';
