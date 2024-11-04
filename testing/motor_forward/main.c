@@ -49,8 +49,7 @@ void irq_btn(uint gpio)
         else
             duty_cycle = 1.f;
 
-        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle);
-        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle);
+        set_wheels_duty_cycle(duty_cycle);
     }
     else if (gpio == BTN_22_PIN) 
     {

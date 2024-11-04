@@ -7,17 +7,12 @@
 #define BTN_DECREASE_SPEED 22
 #define BTN_START_TEST 21
 #define BTN_INCREASE_SPEED 20
-#define TEST_TIME 1500
-
-float duty_cycle = 0.5f;
-bool test_active = false;
+#define TEST_TIME 5000
 
 void init_gpio();
 void init_inerrupts();
 void irq_handler(uint gpio, uint32_t events);
 
-/// @brief this callback is called after 1.5s after the test starts
-int64_t end_test_callback(alarm_id_t id, void* user_data);
 struct repeating_timer encoderPrintTimer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
 bool encoderPrintCallback(struct repeating_timer *t);
@@ -42,8 +37,11 @@ void init_gpio()
     gpio_init(BTN_START_TEST);
 
     init_wheels();
-    set_wheels_duty_cycle(duty_cycle);
     setupEncoderPins();
+    
+    set_car_state(CAR_FORWARD);
+    set_wheels_duty_cycle(0.f);
+    start_pid();
 }
 void init_inerrupts()
 {
@@ -56,52 +54,29 @@ void init_inerrupts()
 
 void irq_handler(uint gpio, uint32_t events)
 {
-    if (!test_active)
+    if (gpio == BTN_START_TEST)
     {
-        if (gpio == BTN_DECREASE_SPEED)
+        // If the wheel is already turning, set target speed to zero
+        if (pid_left.target_speed != 0.00f)
+            pid_left.target_speed = 0.f;
+        // If the wheel is stationary, set the target speed to max
+        else
         {
-            duty_cycle -= 0.25;
-            if (duty_cycle < 0.f)
-                duty_cycle = 0.0f;
-            set_wheels_duty_cycle(duty_cycle);
-        }
-        else if (gpio == BTN_START_TEST)
-        {
-            set_car_state(CAR_FORWARD);
-            test_active = true;
-            add_alarm_in_ms(TEST_TIME, end_test_callback, NULL, false);
+            pid_left.target_speed = 40.f;
             leftNotchCount = 0;
             rightNotchCount = 0;
-            left_accul = 0.f;
-            right_accul = 0.f;
-        }
-        else if (gpio == BTN_INCREASE_SPEED)
-        {
-            duty_cycle += 0.25;
-            if (duty_cycle > 1.f)
-                duty_cycle = 1.f;
-            set_wheels_duty_cycle(duty_cycle);
         }
     }
     if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
+        pid_right.target_speed = leftEncoderSpeed;
     }
 }
 
 bool encoderPrintCallback(struct repeating_timer *t)
 {
-    if (test_active)
-    {
-        printf("leftSpeed:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
-        printf("rightSpeed:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
-    }
+    printf("leftRPM:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
+    printf("rightRPM:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
     return true;
-}
-
-int64_t end_test_callback(alarm_id_t id, void* user_data)
-{
-    set_car_state(CAR_STATIONARY);
-    test_active = false;
-    return 0;
 }

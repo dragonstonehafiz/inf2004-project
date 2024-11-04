@@ -44,10 +44,15 @@ void set_left_wheel_duty_cycle(float dutyCycle);
 /// @param dutyCycle the duty cycle to set the wheel to
 void set_right_wheel_duty_cycle(float dutyCycle);
 
+struct repeating_timer pid_timer;
 /// @brief moves the current speed to the targets speed and changes duty_cycle accordingly
-void compute_wheel_duty_cycle(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error);
-/// @brief This is the function that will be called whenever we want to use compute pid to change wheel speed
+void compute_wheel_duty_cycle(PID_VAR * pid);
+/// @brief This is the function that will be to use a timer to calculate pid
 bool pid_timer_callback(struct repeating_timer *t);
+/// @brief Starts the pid timer
+void start_pid();
+/// @brief Ends the pid timer
+void end_pid();
 
 void init_wheels()
 {
@@ -130,32 +135,40 @@ void set_right_wheel_duty_cycle(float dutyCycle)
     set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, dutyCycle);
 }
 
-void compute_wheel_duty_cycle(float target_speed, float current_speed, float *duty_cycle, float *integral, float *prev_error)
+void compute_wheel_duty_cycle(PID_VAR * pid)
 {
-    float error = target_speed - current_speed;
-    *integral += error;
-    float derivative = error - *prev_error;
+    float error = pid->target_speed - pid->current_speed;
+    pid->integral += error;
+    float derivative = error - pid->prev_error;
 
     // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
-    *duty_cycle += 0.1 * error + 0.01 * (*integral) + 0.005 * derivative;
+    pid->duty_cycle += 0.1 * error + 0.01 * (pid->integral) + 0.005 * derivative;
 
     // Clamp the duty cycle to the range [0, 1]
-    if (*duty_cycle > 1.0)
-        *duty_cycle = 1.0;
-    else if (*duty_cycle < 0)
-        *duty_cycle = 0;
+    if (pid->duty_cycle > 1.0)
+        pid->duty_cycle = 1.0;
+    else if (pid->duty_cycle < 0)
+        pid->duty_cycle = 0;
 
-    *prev_error = error;
+    pid->prev_error = error;
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
     // calculate the new duty cycle of the left wheel
-    compute_wheel_duty_cycle(pid_left.target_speed, pid_left.current_speed, &pid_left.duty_cycle, &pid_left.integral, &pid_left.prev_error);
+    compute_wheel_duty_cycle(&pid_left);
     set_left_wheel_duty_cycle(pid_left.duty_cycle);
     //
-    compute_wheel_duty_cycle(pid_right.target_speed, pid_right.current_speed, &pid_right.duty_cycle, &pid_right.integral, &pid_right.prev_error);
+    compute_wheel_duty_cycle(&pid_right);
     set_right_wheel_duty_cycle(pid_right.duty_cycle);
     return true;
+}
+void start_pid()
+{
+    add_repeating_timer_ms(100, pid_timer_callback, NULL, &pid_timer);
+}
+void end_pid()
+{
+    cancel_repeating_timer(&pid_timer);
 }
 
 #endif
