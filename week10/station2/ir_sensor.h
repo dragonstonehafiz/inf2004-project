@@ -5,9 +5,9 @@
 #include <stdbool.h>
 
 // IR sensor configuration
-#define IR_THRESHOLD 1.5f
-#define IR_SENSOR_PIN 6     // Analog pin for IR sensor
-#define PULSE_PIN_BARCODE 7 // Digital pin for pulse detection
+#define IR_THRESHOLD 0.2f
+#define IR_SENSOR_PIN 27    // Analog pin for IR sensor
+#define PULSE_PIN_BARCODE 6 // Digital pin for pulse detection
 #define PIN_LINE_TRACING 5
 #define WIDE_FACTOR 2.5f
 #define PULSE_WIDTH_THRESHOLD 1000   // 0.1 second threshold for pulse width debounce
@@ -22,14 +22,11 @@
 // Initializes the IR sensor module with callbacks for segment recording and timeout handling
 void ir_sensor_init(void);
 
-// Reads the analog value from the IR sensor and returns it as a voltage level
-float ir_sensor_read(void);
-
 void create_line_tracing_transaction(unsigned int gpio, uint32_t events);
-void handle_line_tracing(void (*callback)(uint8_t movement_state));
+void handle_line_tracing(void (*callback)(uint8_t movement_state, float duty_cycle_left, float duty_cycle_right));
 
 void create_barcode_transaction(unsigned int gpio, uint32_t events);
-void handle_barcode(void);
+void handle_barcode();
 
 void reset_ir_sensor_status(void);
 #endif // IR_SENSOR_H

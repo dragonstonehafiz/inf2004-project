@@ -12,7 +12,7 @@
 #define BTN_20_PIN 20
 #define BTN_START 21
 #define BTN_22_PIN 22
-#define DUTY_CYCLE_MAX 0.5f
+#define DUTY_CYCLE_MAX 0.4f
 
 float duty_cycle = 0.0f;
 
@@ -26,8 +26,9 @@ int main()
 
     while (true)
     {
+        // add_repeating_ timer_ms(10, handle_barcode, NULL, &timer);
         handle_barcode();
-        handle_line_tracing(&set_car_state);
+        handle_line_tracing(&set_car_state_impl);
         tight_loop_contents();
     }
 }
@@ -59,7 +60,7 @@ void irq_btn(uint gpio)
 {
     if (gpio == BTN_20_PIN)
     {
-        set_car_state(CAR_TURN_LEFT_FORWARD);
+        set_car_state(CAR_FORWARD);
     }
     else if (gpio == BTN_START)
     {

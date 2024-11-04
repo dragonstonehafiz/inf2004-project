@@ -9,9 +9,9 @@ void print_bar_space_widths(int64_t *widths, int count)
     // printf("Stored bar_space_widths:\n");
     for (int i = 0; i < count; i++)
     {
-        // printf("%lld ", widths[i]);
+        printf("%lld ", widths[i]);
     }
-    // printf("\n");
+    printf("\n");
 }
 
 // Function to calculate mean
@@ -20,7 +20,8 @@ double calculate_mean(int64_t arr[], int size)
     double sum = 0.0;
     for (int i = 0; i < size; i++)
     {
-        sum += arr[i];
+        if (arr[i] > 0)
+            sum += arr[i];
     }
     return sum / size;
 }
@@ -29,11 +30,16 @@ double calculate_mean(int64_t arr[], int size)
 double calculate_std_dev(int64_t arr[], int size, double mean)
 {
     double sum = 0.0;
+    int count = 0; // Track the number of non-zero elements
     for (int i = 0; i < size; i++)
     {
-        sum += pow(arr[i] - mean, 2);
+        if (arr[i] > 0) // Only consider non-zero elements
+        {
+            sum += pow(arr[i] - mean, 2);
+            count++;
+        }
     }
-    return sqrt(sum / size);
+    return count > 0 ? sqrt(sum / count) : 0.0; // Avoid division by zero
 }
 
 // Function to calculate median

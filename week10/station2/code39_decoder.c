@@ -1,3 +1,4 @@
+// code39_decoder.c
 #include <string.h>
 #include <stdio.h>
 #include "code39_decoder.h"
@@ -52,8 +53,7 @@ int decode_code39_sequence(int64_t widths[], char *output)
     output[output_index++] = decoded_char;
 
     output[output_index] = '\0'; // Null-terminate the output string
-    // printf("Output: %s\n", output);
-    return 1; // Return true if decoding succeeds
+    return 1;                    // Return true if decoding succeeds
 }
 
 void reverse_widths(int64_t *widths, int length)

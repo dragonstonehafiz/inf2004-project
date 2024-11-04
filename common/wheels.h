@@ -4,6 +4,8 @@
 #include "motor.h"
 #include "pins.h"
 
+#define set_car_state(nextState) set_car_state_impl(nextState, -1.0f, -1.0f)
+
 enum CAR_STATE
 {
     CAR_STATIONARY = 0,
@@ -33,7 +35,7 @@ PID_VAR pid_right = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle = 0.
 void init_wheels();
 /// @brief sets what the car should be doing. (turning left, going forward, stationary, etc...)
 /// @param nextState (CAR_STATIONARY, CAR_FORWARD, CAR_BACKWARD, CAR_TURN_RIGHT, CAR_TURN_LEFT)
-void set_car_state(uint8_t nextState);
+void set_car_state_impl(uint8_t nextState, float duty_cycle_left, float duty_cycle_right);
 /// @brief sets the duty cycle of both wheels to the same value
 /// @param dutyCycle the duty cycle to set the wheels to
 void set_wheels_duty_cycle(float dutyCycle);
@@ -58,7 +60,7 @@ void init_wheels()
     set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.f);
     set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.f);
 }
-void set_car_state(uint8_t nextState)
+void set_car_state_impl(uint8_t nextState, float duty_cycle_left, float duty_cycle_right)
 {
     switch (nextState)
     {
@@ -74,6 +76,12 @@ void set_car_state(uint8_t nextState)
         set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
         pid_left.turning = true;
         pid_right.turning = true;
+        // only set duty cycle if the values r not default values.
+        if (duty_cycle_left != -1.0f && duty_cycle_right != -1.0f)
+        {
+            set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle_left);
+            set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle_right);
+        }
         break;
     case CAR_BACKWARD:
         // When moving forward, right wheel is counter clockwise, left wheel is clockwise
@@ -101,8 +109,8 @@ void set_car_state(uint8_t nextState)
         set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
         pid_left.turning = true;
         pid_right.turning = true;
-        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.3f);
-        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.5f);
+        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle_left);
+        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle_right);
 
         break;
     case CAR_TURN_RIGHT_FORWARD:
@@ -110,8 +118,8 @@ void set_car_state(uint8_t nextState)
         set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
         pid_left.turning = true;
         pid_right.turning = true;
-        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.5f);
-        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.3f);
+        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, duty_cycle_left);
+        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, duty_cycle_right);
 
         break;
     default:
