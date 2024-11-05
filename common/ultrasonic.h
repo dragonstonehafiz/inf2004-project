@@ -11,6 +11,9 @@
 // Interval in milliseconds for checking the distance
 #define CHECK_INTERVAL_MS 200
 
+// Calibration constant for close distances in centimeters
+#define CLOSE_DISTANCE_CALIBRATION 0.25 
+
 // Function declarations
 void setupUltrasonicPins()
 {
@@ -56,7 +59,14 @@ float getCm()
 {
     uint64_t pulseLength = getPulse();
     if (pulseLength == 0) return -1.0;  
-    return (float)pulseLength / 29.0 / 2.0; 
+    float distance = (float)pulseLength / 29.0 / 2.0;
+    
+    // Apply calibration for close distances
+    if (distance < 5.6) {
+        distance -= CLOSE_DISTANCE_CALIBRATION; 
+    }
+
+    return distance;
 }
 
 #endif 
