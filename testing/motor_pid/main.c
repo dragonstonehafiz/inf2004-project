@@ -25,7 +25,10 @@ int main()
     add_repeating_timer_ms(250, encoderPrintCallback, NULL, &encoderPrintTimer);
 
     while (true) 
+    {
+        checkIfStopped();
         tight_loop_contents();
+    }
 }
 
 void init_gpio() 
@@ -62,7 +65,7 @@ void irq_handler(uint gpio, uint32_t events)
         // If the wheel is stationary, set the target speed to max
         else
         {
-            pid_left.target_speed = 40.f;
+            pid_left.target_speed = WHEEL_MAX_SPEED;
             leftNotchCount = 0;
             rightNotchCount = 0;
         }
@@ -70,13 +73,13 @@ void irq_handler(uint gpio, uint32_t events)
     if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
-        pid_right.target_speed = leftEncoderSpeed;
+        pid_right.target_speed = pid_left.current_speed;
     }
 }
 
 bool encoderPrintCallback(struct repeating_timer *t)
 {
-    printf("leftRPM:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
-    printf("rightRPM:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
+    // printf("leftRPM:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
+    // printf("rightRPM:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
     return true;
 }

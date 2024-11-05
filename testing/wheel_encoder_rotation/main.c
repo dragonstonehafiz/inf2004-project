@@ -106,8 +106,8 @@ bool encoderPrintCallback(struct repeating_timer *t)
     if (test_active)
     {
         printf("distanceToTravel:%0.2f\n", dist_to_travel);
-        printf("leftRPM:%0.2f, leftDist:%0.2f, leftAccul:%0.2f\n", leftEncoderSpeed, leftTotalDistance, left_accul);
-        // printf("rightRPM:%0.2f, rightDist:%0.2f, rightAccul:%0.2f\n", rightEncoderSpeed, rightTotalDistance, right_accul);
+        printf("leftRPM:%0.2f, leftDist:%0.2f", leftEncoderSpeed, leftTotalDistance);
+        // printf("rightRPM:%0.2f, rightDist:%0.2f", rightEncoderSpeed, rightTotalDistance);
     }
     return true;
 }

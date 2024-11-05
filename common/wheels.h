@@ -4,6 +4,8 @@
 #include "motor.h"
 #include "pins.h"
 
+#define WHEEL_MAX_SPEED 21.64
+
 enum CAR_STATE
 {
     CAR_STATIONARY = 0,
@@ -26,8 +28,8 @@ typedef struct PID_VAR
     bool turning; // this flag is used to make sure we don't try to change duty cycle if wheel is idle
 } PID_VAR;
 // Variables for controling pid speed
-PID_VAR pid_left = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
-PID_VAR pid_right = {.current_speed = 1.f, .target_speed = 1.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
+PID_VAR pid_left = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
+PID_VAR pid_right = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false};
 
 /// @brief initializes all pins and pwm for both motors
 void init_wheels();
@@ -140,9 +142,10 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
     float error = pid->target_speed - pid->current_speed;
     pid->integral += error;
     float derivative = error - pid->prev_error;
+    float step = 0.1 * error + 0.01 * (pid->integral) + 0.005 * derivative;
 
     // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
-    pid->duty_cycle += 0.1 * error + 0.01 * (pid->integral) + 0.005 * derivative;
+    pid->duty_cycle += step;
 
     // Clamp the duty cycle to the range [0, 1]
     if (pid->duty_cycle > 1.0)
@@ -151,20 +154,24 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
         pid->duty_cycle = 0;
 
     pid->prev_error = error;
+
+    printf("target: %.1f, current: %.1f, duty_cycle: %.5f\n", pid->target_speed, pid->current_speed, pid->duty_cycle);
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
     // calculate the new duty cycle of the left wheel
     compute_wheel_duty_cycle(&pid_left);
     set_left_wheel_duty_cycle(pid_left.duty_cycle);
-    //
+    // calculatr duty cycle for right wheel
     compute_wheel_duty_cycle(&pid_right);
     set_right_wheel_duty_cycle(pid_right.duty_cycle);
+    // printf("leftTarget: %.2f, leftDutyCycle: %.2f\n", pid_left.target_speed, pid_left.duty_cycle);
+    // printf("rightTarget: %.2f, rightDutyCycle: %.2f\n", pid_right.target_speed, pid_right.duty_cycle);
     return true;
 }
 void start_pid()
 {
-    add_repeating_timer_ms(100, pid_timer_callback, NULL, &pid_timer);
+    add_repeating_timer_ms(500, pid_timer_callback, NULL, &pid_timer);
 }
 void end_pid()
 {

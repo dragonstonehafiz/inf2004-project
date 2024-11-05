@@ -6,6 +6,7 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "pins.h"
+#include "wheels.h"
 
 #define CM_PER_NOTCH 1.005
 #define TIMEOUT_THRESHOLD 1500000
@@ -17,13 +18,11 @@ static int rightStopCounter = 0;
 volatile uint32_t leftNotchCount = 0;
 volatile double leftTotalDistance = 0.0;
 volatile uint64_t leftLastNotchTime = 0;
-volatile double leftEncoderSpeed = 0.0;
 
 // Global variables to store measurement data for the right wheel
 volatile uint32_t rightNotchCount = 0;
 volatile double rightTotalDistance = 0.0;
 volatile uint64_t rightLastNotchTime = 0;
-volatile double rightEncoderSpeed = 0.0;
 
 volatile float leftPulseWidth = 0.0;
 volatile float rightPulseWidth = 0.0;
@@ -31,9 +30,9 @@ volatile float rightPulseWidth = 0.0;
 // Function to print current encoder data for both wheels
 static inline void printEncoderData(void) {
     printf("Left Wheel - Notch Count: %u, Distance: %.4f cm, Speed: %.4f cm/s\n",
-           leftNotchCount, leftTotalDistance, leftEncoderSpeed);
+           leftNotchCount, leftTotalDistance, pid_left.current_speed);
     printf("Right Wheel - Notch Count: %u, Distance: %.4f cm, Speed: %.4f cm/s\n",
-           rightNotchCount, rightTotalDistance, rightEncoderSpeed);
+           rightNotchCount, rightTotalDistance, pid_right.current_speed);
 }
 
 // Combined encoder callback to handle both left and right encoder interrupts
@@ -47,10 +46,10 @@ void encoderCallback(uint gpio, uint32_t events) {
             // Increment the count of notches detected for the left wheel
             leftNotchCount++;
             leftTotalDistance = (double)leftNotchCount * CM_PER_NOTCH;
-            leftEncoderSpeed = CM_PER_NOTCH / (timeDiff / 1e6);
+            pid_left.current_speed = CM_PER_NOTCH / (timeDiff / 1e6);
             leftPulseWidth = timeDiff / 1e6;
         } else {
-            leftEncoderSpeed = 0.0;
+            pid_left.current_speed = 0.0;
         }
 
         leftLastNotchTime = currentTime;
@@ -63,10 +62,10 @@ void encoderCallback(uint gpio, uint32_t events) {
             // Increment the count of notches detected for the right wheel
             rightNotchCount++;
             rightTotalDistance = (double)rightNotchCount * CM_PER_NOTCH;
-            rightEncoderSpeed = CM_PER_NOTCH / (timeDiff / 1e6);
+            pid_right.current_speed = CM_PER_NOTCH / (timeDiff / 1e6);
             rightPulseWidth = timeDiff / 1e6;
         } else {
-            rightEncoderSpeed = 0.0;
+            pid_right.current_speed = 0.0;
         }
 
         rightLastNotchTime = currentTime;
@@ -91,11 +90,12 @@ void checkIfStopped() {
 
     // Only set speed to zero if the counter exceeds a threshold which is 3 checks in a row
     if (leftStopCounter >= 3) {
-        leftEncoderSpeed = 0.0;
+        pid_left.current_speed = 0.f;
     }
 
     if (rightStopCounter >= 3) {
-        rightEncoderSpeed = 0.0;
+        pid_right.current_speed = 0.f;
+
     }
 }
 
