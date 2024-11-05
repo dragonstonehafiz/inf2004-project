@@ -45,6 +45,7 @@ void init_gpio()
     set_car_state(CAR_FORWARD);
     set_wheels_duty_cycle(0.f);
     start_pid();
+    pid_right.enabled = true;
 }
 void init_inerrupts()
 {
@@ -60,12 +61,12 @@ void irq_handler(uint gpio, uint32_t events)
     if (gpio == BTN_START_TEST)
     {
         // If the wheel is already turning, set target speed to zero
-        if (pid_left.target_speed != 0.00f)
-            pid_left.target_speed = 0.f;
+        if (pid_left.duty_cycle != 0.00f)
+            set_left_wheel_duty_cycle(0.f);
         // If the wheel is stationary, set the target speed to max
         else
         {
-            pid_left.target_speed = WHEEL_MAX_SPEED;
+            set_left_wheel_duty_cycle(0.75f);
             resetEncoder();
         }
     }

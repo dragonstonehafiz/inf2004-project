@@ -92,7 +92,7 @@ int main()
     init_interrupts();
     change_state(STATION_1_IDLE);
 
-    uint64_t last_distance_check_time = time_us_64();  
+    uint64_t last_distance_check_time = time_us_64();
     while (true) 
     {
         uint64_t current_time = time_us_64();
