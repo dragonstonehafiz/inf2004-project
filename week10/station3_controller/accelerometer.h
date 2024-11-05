@@ -4,6 +4,7 @@
 #include "pico/binary_info.h"
 #include "hardware/i2c.h"
 #include <math.h>
+#include "udp.h"
 
 // LSM303DLHC I2C addresses
 #define LSM303_ADDR_ACCEL 0x19 // Accelerometer address
@@ -74,7 +75,6 @@ static void i2c_scan()
 // Function to initialize the LSM303DLHC accelerometer and magnetometer
 void init_accelerometer() 
 {
-    printf("1");
     uint8_t buf[2];
 
      // Initialize I2C at 400kHz
@@ -97,10 +97,8 @@ void init_accelerometer()
     if (i2c_write_blocking(i2c_default, LSM303_ADDR_MAG, buf, 2, false) < 0)
         printf("Failed to initialize magnetometer\n");
 
-    printf("2");
     // Scan for I2C devices
     i2c_scan();
-    printf("3");
 }
 
 
@@ -295,10 +293,21 @@ char get_turn_direction_char(turn_direction_t turn_direction) {
     }
 }
 
+// char* serialize_movement_data(const movement_data_t* data) {
+//     static char buffer[MAX_DATA_STRING];
+//     snprintf(buffer, sizeof(buffer), "%lu,%c,%.1f,%c,%.1f\n",
+//         data->timestamp,
+//         get_movement_direction_char(data->forward_direction),
+//         data->forward_speed,
+//         get_turn_direction_char(data->turn_direction),
+//         data->turn_speed
+//     );
+//     return buffer;
+// }
+
 char* serialize_movement_data(const movement_data_t* data) {
     static char buffer[MAX_DATA_STRING];
-    snprintf(buffer, sizeof(buffer), "%lu,%c,%.1f,%c,%.1f\n",
-        data->timestamp,
+    snprintf(buffer, sizeof(buffer), "PICO|%c:%.1f,%c:%.1f\n",
         get_movement_direction_char(data->forward_direction),
         data->forward_speed,
         get_turn_direction_char(data->turn_direction),
@@ -307,28 +316,44 @@ char* serialize_movement_data(const movement_data_t* data) {
     return buffer;
 }
 
-char* get_data_to_send(){
-
+void get_data_to_send() {
+    static float prev_forward_speed = 0.0f;
+    static float prev_turn_speed = 0.0f;
+    static movement_direction_t prev_forward_dir = DIRECTION_NONE;
+    static turn_direction_t prev_turn_dir = TURN_NONE;
+    
     float pitch, roll, yaw;
     movement_data_t movement_data;
     char* data_to_send;
 
     // Read accelerometer data
-        calculate_angles(&pitch, &roll, &yaw);
+    calculate_angles(&pitch, &roll, &yaw);
+    
+    // Process movement commands
+    movement_command_t forward_command = get_command_forward(pitch);
+    turn_command_t turn_command = get_command_turn(roll);
+
+    // Update movement data structure
+    movement_data.forward_direction = forward_command.direction;
+    movement_data.forward_speed = forward_command.speed_percentage;
+    movement_data.turn_direction = turn_command.direction;
+    movement_data.turn_speed = turn_command.turn_percentage;
+    movement_data.timestamp = to_ms_since_boot(get_absolute_time());
+
+    // Check if current data is different from previous data
+    if (movement_data.forward_direction != prev_forward_dir ||
+        movement_data.forward_speed != prev_forward_speed ||
+        movement_data.turn_direction != prev_turn_dir ||
+        movement_data.turn_speed != prev_turn_speed) {
         
-        // Process movement commands
-        movement_command_t forward_command = get_command_forward(pitch);
-        turn_command_t turn_command = get_command_turn(roll);
-
-        // Update movement data structure
-        movement_data.forward_direction = forward_command.direction;
-        movement_data.forward_speed = forward_command.speed_percentage;
-        movement_data.turn_direction = turn_command.direction;
-        movement_data.turn_speed = turn_command.turn_percentage;
-        movement_data.timestamp = to_ms_since_boot(get_absolute_time());
-
-        // Serialize and copy to our buffer
+        // Data has changed, send it
         data_to_send = serialize_movement_data(&movement_data);
+        send_udp_data(data_to_send);
 
-        return data_to_send;
+        // Update previous values
+        prev_forward_dir = movement_data.forward_direction;
+        prev_forward_speed = movement_data.forward_speed;
+        prev_turn_dir = movement_data.turn_direction;
+        prev_turn_speed = movement_data.turn_speed;
+    }
 }

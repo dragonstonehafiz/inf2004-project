@@ -18,7 +18,6 @@
 #error "Please define WIFI_PASSWORD in CMakeLists.txt"
 #endif
 
-// Callback function for receiving UDP data
 void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
     if (p != NULL) {
         // Create a buffer for the received data
@@ -26,17 +25,34 @@ void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const 
         memcpy(received_data, p->payload, p->len);
         received_data[p->len] = '\0';  // Null terminate the string
 
-        // Parse and print the received data
-        unsigned long timestamp;
-        char movement_dir, turn_dir;
-        float forward_speed, turn_speed;
+        // Variables to store parsed data  
+        char device_name[32];
+        char movement_dir;
+        char turn_dir;
+        float forward_speed;
+        float turn_speed;
         
-        sscanf(received_data, "%lu,%c,%f,%c,%f", 
-               &timestamp, &movement_dir, &forward_speed, 
-               &turn_dir, &turn_speed);
-
-        printf("Received - Time: %lu, Movement: %c (%.1f%%), Turn: %c (%.1f%%)\n",
-               timestamp, movement_dir, forward_speed, turn_dir, turn_speed);
+        // Parse the device name and data
+        char* data_part = strchr(received_data, '|');
+        if (data_part != NULL) {
+            // Extract device name
+            int device_name_len = data_part - received_data;
+            strncpy(device_name, received_data, device_name_len);
+            device_name[device_name_len] = '\0';
+            
+            // Move pointer past the '|'
+            data_part++;
+            
+            // Parse the movement and turn data
+            if (sscanf(data_part, "%c:%f,%c:%f", 
+                   &movement_dir, &forward_speed, 
+                   &turn_dir, &turn_speed) == 4) {
+                
+                printf("Device: %s, Movement: %c (%.1f%%), Turn: %c (%.1f%%)\n",
+                       device_name, movement_dir, forward_speed, 
+                       turn_dir, turn_speed);
+            }
+        }
 
         free(received_data);
         pbuf_free(p);
@@ -65,6 +81,7 @@ void init_udp_server() {
 
 int main() {
     stdio_init_all();
+    sleep_ms(2000);
     printf("UDP Server Starting...\n");
 
     // Initialize WiFi
@@ -72,6 +89,8 @@ int main() {
         printf("Failed to initialize WiFi\n");
         return -1;
     }
+
+    printf("Connecting to Wi-Fi\n");
 
     cyw43_arch_enable_sta_mode();
 
