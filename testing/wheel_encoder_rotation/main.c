@@ -13,13 +13,12 @@
 float duty_cycle = 0.5f;
 bool test_active = false;
 float dist_to_travel;
-float left_accul = 0, right_accul = 0;
 
 void init_gpio();
 void init_inerrupts();
 void irq_handler(uint gpio, uint32_t events);
 /// @brief takes the provided angle and calculates how much the wheel must turn to reach that point
-float calc_dist_to_turn(angle);
+float calc_dist_to_turn(float angle);
 
 /// @brief this callback is called after 1.5s after the test starts
 int64_t end_test_callback(alarm_id_t id, void* user_data);
@@ -59,7 +58,7 @@ void init_inerrupts()
     gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_LEFT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
 }
 
-float calc_dist_to_turn(angle)
+float calc_dist_to_turn(float angle)
 {
     return (float)FULL_ROTATION_CIRCUMFERENCE * (angle / 360);
 }
@@ -81,8 +80,6 @@ void irq_handler(uint gpio, uint32_t events)
             test_active = true;
             leftNotchCount = 0;
             rightNotchCount = 0;
-            left_accul = 0.f;
-            right_accul = 0.f;
             dist_to_travel = calc_dist_to_turn(90);
         }
         else if (gpio == BTN_INCREASE_SPEED)
@@ -96,8 +93,6 @@ void irq_handler(uint gpio, uint32_t events)
     if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
-        left_accul += leftPulseWidth * CM_PER_NOTCH;
-        right_accul += rightPulseWidth * CM_PER_NOTCH;
         if (leftTotalDistance > dist_to_travel)
         {
             set_car_state(CAR_STATIONARY);
@@ -110,8 +105,9 @@ bool encoderPrintCallback(struct repeating_timer *t)
 {
     if (test_active)
     {
+        printf("distanceToTravel:%0.2f\n", dist_to_travel);
         printf("leftRPM:%0.2f, leftDist:%0.2f, leftAccul:%0.2f\n", leftEncoderSpeed, leftTotalDistance, left_accul);
-        printf("rightRPM:%0.2f, rightDist:%0.2f, rightAccul:%0.2f\n", rightEncoderSpeed, rightTotalDistance, right_accul);
+        // printf("rightRPM:%0.2f, rightDist:%0.2f, rightAccul:%0.2f\n", rightEncoderSpeed, rightTotalDistance, right_accul);
     }
     return true;
 }

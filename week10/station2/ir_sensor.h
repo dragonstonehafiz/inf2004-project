@@ -8,7 +8,7 @@
 #define IR_THRESHOLD 1.5f
 #define IR_SENSOR_PIN 27    // Analog pin for IR sensor
 #define PULSE_PIN_BARCODE 6 // Digital pin for pulse detection
-#define PIN_LINE_TRACING 5
+#define PIN_LINE_TRACING 17
 #define WIDE_FACTOR 2.5f
 #define PULSE_WIDTH_THRESHOLD 1000   // 0.001 second threshold for pulse width debounce
 #define TIMEOUT_THRESHOLD_US 1000000 // 0.5-second timeout threshold in microseconds

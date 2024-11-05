@@ -131,9 +131,10 @@ void irq_handler(uint gpio, uint32_t events)
         else if (station1_state == STATION_1_90_CM_IDLE)
             change_state(STATION_1_90_CM);
     }
-    else if (gpio == WHEEL_ENCODER_LEFT_PIN && gpio == WHEEL_ENCODER_RIGHT_PIN)
+    else if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
+        printf("wheel encoder left distance:%.2f\n", leftTotalDistance);
         if (leftTotalDistance >= distToTravel)
         {
             switch (station1_state)

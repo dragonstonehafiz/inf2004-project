@@ -72,8 +72,6 @@ void irq_handler(uint gpio, uint32_t events)
             add_alarm_in_ms(TEST_TIME, end_test_callback, NULL, false);
             leftNotchCount = 0;
             rightNotchCount = 0;
-            left_accul = 0.f;
-            right_accul = 0.f;
         }
         else if (gpio == BTN_INCREASE_SPEED)
         {
