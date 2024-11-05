@@ -36,12 +36,12 @@ void change_state(uint8_t next_state)
 {
     station1_state = next_state;
     set_wheels_duty_cycle(0.f);
-    printf("hello! %d\n", next_state);
     switch (next_state)
     {
         case STATION_1_IDLE:
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
+            printf("FIRST PART IDLE\n");
             break;
         case STATION_1_FIRST_PART:
             // Move the car forward at max speed
@@ -49,11 +49,13 @@ void change_state(uint8_t next_state)
             set_wheels_duty_cycle(1.f);
             // Start timer
             // add_repeating_timer_ms(250, ultrasonic_sensor_callback, NULL, &ultrasonic_timer);
+            printf("FIRST PART\n");
             break;
         case STATION_1_TURN_IDLE:
             // Move the car forward at max speed
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
+            printf("TURN IDLE\n");
             break;
         case STATION_1_TURN:
             set_car_state(CAR_TURN_RIGHT);
@@ -61,19 +63,23 @@ void change_state(uint8_t next_state)
             // cancel_repeating_timer(&ultrasonic_timer);
             set_wheels_duty_cycle(1.f);
             distToTravel = ((float)ANGLE_TO_TURN / 360.f) * 76.0265;
+            resetEncoder();
+            printf("TURN\n");
             break;
         case STATION_1_90_CM_IDLE:
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
+            printf("90 CM IDLE\n");
             break;
         case STATION_1_90_CM:
             set_car_state(CAR_FORWARD);
             // Move the car forward at max speed
             set_wheels_duty_cycle(1.f);
             distToTravel = 90;
+            resetEncoder();
+            printf("90 CM\n");
             break;
     }
-    printf("goodbye! %d\n", next_state);
 }
 
 void init_gpio();
@@ -134,7 +140,9 @@ void irq_handler(uint gpio, uint32_t events)
     else if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
-        printf("wheel encoder left distance:%.2f\n", leftTotalDistance);
+
+        if (station1_state == STATION_1_90_CM)
+            printf("leftDistance: %0.2f\n", leftTotalDistance);
         if (leftTotalDistance >= distToTravel)
         {
             switch (station1_state)

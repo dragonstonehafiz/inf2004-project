@@ -108,4 +108,14 @@ void setupEncoderPins() {
     gpio_set_dir(WHEEL_ENCODER_RIGHT_PIN, GPIO_IN);
 }
 
+// Resets the internal variables used to track distance travelled by encoder
+void resetEncoder() {
+    leftNotchCount = 0;
+    leftTotalDistance = 0.0;
+    leftLastNotchTime = time_us_64();
+
+    rightNotchCount = 0;
+    rightTotalDistance = 0.0;
+    rightNotchCount = time_us_64();
+}
 #endif
