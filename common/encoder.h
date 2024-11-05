@@ -24,9 +24,6 @@ volatile uint32_t rightNotchCount = 0;
 volatile double rightTotalDistance = 0.0;
 volatile uint64_t rightLastNotchTime = 0;
 
-volatile float leftPulseWidth = 0.0;
-volatile float rightPulseWidth = 0.0;
-
 // Function to print current encoder data for both wheels
 static inline void printEncoderData(void) {
     printf("Left Wheel - Notch Count: %u, Distance: %.4f cm, Speed: %.4f cm/s\n",
@@ -47,7 +44,6 @@ void encoderCallback(uint gpio, uint32_t events) {
             leftNotchCount++;
             leftTotalDistance = (double)leftNotchCount * CM_PER_NOTCH;
             pid_left.current_speed = CM_PER_NOTCH / (timeDiff / 1e6);
-            leftPulseWidth = timeDiff / 1e6;
         } else {
             pid_left.current_speed = 0.0;
         }
@@ -63,7 +59,6 @@ void encoderCallback(uint gpio, uint32_t events) {
             rightNotchCount++;
             rightTotalDistance = (double)rightNotchCount * CM_PER_NOTCH;
             pid_right.current_speed = CM_PER_NOTCH / (timeDiff / 1e6);
-            rightPulseWidth = timeDiff / 1e6;
         } else {
             pid_right.current_speed = 0.0;
         }
@@ -90,12 +85,11 @@ void checkIfStopped() {
 
     // Only set speed to zero if the counter exceeds a threshold which is 3 checks in a row
     if (leftStopCounter >= 3) {
-        pid_left.current_speed = 0.f;
+        // pid_left.current_speed = 0.f;
     }
 
     if (rightStopCounter >= 3) {
-        pid_right.current_speed = 0.f;
-
+        // pid_right.current_speed = 0.f;
     }
 }
 

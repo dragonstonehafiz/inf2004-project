@@ -141,8 +141,6 @@ void irq_handler(uint gpio, uint32_t events)
     {
         encoderCallback(gpio, events);
 
-        if (station1_state == STATION_1_90_CM)
-            printf("leftDistance: %0.2f\n", leftTotalDistance);
         if (leftTotalDistance >= distToTravel)
         {
             switch (station1_state)

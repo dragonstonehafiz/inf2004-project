@@ -154,8 +154,6 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
         pid->duty_cycle = 0;
 
     pid->prev_error = error;
-
-    printf("target: %.1f, current: %.1f, duty_cycle: %.5f\n", pid->target_speed, pid->current_speed, pid->duty_cycle);
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
@@ -165,8 +163,8 @@ bool pid_timer_callback(struct repeating_timer *t)
     // calculatr duty cycle for right wheel
     compute_wheel_duty_cycle(&pid_right);
     set_right_wheel_duty_cycle(pid_right.duty_cycle);
-    // printf("leftTarget: %.2f, leftDutyCycle: %.2f\n", pid_left.target_speed, pid_left.duty_cycle);
-    // printf("rightTarget: %.2f, rightDutyCycle: %.2f\n", pid_right.target_speed, pid_right.duty_cycle);
+    printf("leftSpeed: %.2f, leftTarget: %.2f, rightSpeed: %.2f, rightTarget: %.2f\n", 
+            pid_left.current_speed, pid_left.target_speed, pid_right.current_speed, pid_right.target_speed);
     return true;
 }
 void start_pid()

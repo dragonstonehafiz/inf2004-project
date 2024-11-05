@@ -66,8 +66,7 @@ void irq_handler(uint gpio, uint32_t events)
         else
         {
             pid_left.target_speed = WHEEL_MAX_SPEED;
-            leftNotchCount = 0;
-            rightNotchCount = 0;
+            resetEncoder();
         }
     }
     if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
