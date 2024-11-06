@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define WHEEL_MAX_SPEED 21.64
-#define MAX_STEP 100
+#define INTEGRAL_MAX 50
 
 enum CAR_STATE
 {
@@ -58,6 +58,8 @@ bool pid_timer_callback(struct repeating_timer *t);
 void start_pid();
 /// @brief Ends the pid timer
 void end_pid();
+/// @brief Resets the pid variables for both wheels
+void reset_pid();
 
 void init_wheels()
 {
@@ -65,8 +67,9 @@ void init_wheels()
     setup_motor(WHEEL_RIGHT_PWN_PIN, WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2);
 
     set_car_state(CAR_STATIONARY);
-    set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.f);
-    set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.f);
+    set_wheels_duty_cycle(0.f);
+
+    start_pid();
 }
 void set_car_state(uint8_t nextState)
 {
@@ -147,14 +150,16 @@ void set_right_wheel_duty_cycle(float dutyCycle)
 void compute_wheel_duty_cycle(PID_VAR * pid)
 {
     float error = pid->target_speed - pid->current_speed;
+    // Clamping integral because I'm worried it'll get crazy large if wheel is stationary for too long.
     pid->integral += error;
+    if (pid->integral > INTEGRAL_MAX)
+        pid->integral = INTEGRAL_MAX;
+    else if (pid->integral < -INTEGRAL_MAX)
+        pid->integral = -INTEGRAL_MAX;
     float derivative = error - pid->prev_error;
-    float step = 0.1 * error + 0.01 * (pid->integral) + 0.005 * derivative;
-    if (step > MAX_STEP)
-        step = MAX_STEP;
-    else if (step < -MAX_STEP)
-        step = -MAX_STEP;
     // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
+    float step = 0.25 * error + 0.01 * (pid->integral) + 0.005 * derivative;
+    
     pid->duty_cycle += step; 
 
     // Clamp the duty cycle to the range [0, 1]
@@ -167,31 +172,45 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
-    if (pid_left.enabled)
+    if (pid_left.enabled && pid_left.turning)
     {
         // calculate the new duty cycle of the left wheel
         compute_wheel_duty_cycle(&pid_left);
         set_left_wheel_duty_cycle(pid_left.duty_cycle);
     }
-    if (pid_right.enabled)
+    if (pid_right.enabled && pid_left.turning)
     {
         // calculate duty cycle for right wheel
         compute_wheel_duty_cycle(&pid_right);
         set_right_wheel_duty_cycle(pid_right.duty_cycle);
     }
 
-    printf("\e[1;1H\e[2J");
-    printf("leftSpeed: %.2f, leftIntegral: %.2f\nrightSpeed: %.2f, rightIntegral: %.2f\n", 
-            pid_left.current_speed, pid_left.integral, pid_right.current_speed, pid_right.integral);
+    // printf("\e[1;1H\e[2J");
+    // printf("leftSpeed: %.2f, leftIntegral: %.2f\nrightSpeed: %.2f, rightIntegral: %.2f\n", 
+    //         pid_left.current_speed, pid_left.integral, pid_right.current_speed, pid_right.integral);
     return true;
 }
 void start_pid()
 {
-    add_repeating_timer_ms(250, pid_timer_callback, NULL, &pid_timer);
+    add_repeating_timer_ms(100, pid_timer_callback, NULL, &pid_timer);
 }
 void end_pid()
 {
     cancel_repeating_timer(&pid_timer);
+}
+void reset_pid()
+{
+    pid_left.current_speed = 0.f;
+    pid_left.target_speed = 0.f;
+    pid_left.duty_cycle = 0.f;
+    pid_left.integral = 0.f;
+    pid_left.prev_error = 0.f;
+
+    pid_right.current_speed = 0.f;
+    pid_right.target_speed = 0.f;
+    pid_right.duty_cycle = 0.f;
+    pid_right.integral = 0.f;
+    pid_right.prev_error = 0.f;
 }
 
 #endif

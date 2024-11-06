@@ -8,7 +8,8 @@
 #include "pins.h"
 #include "wheels.h"
 
-#define CM_PER_NOTCH 1.005
+#define WHEEL_CIRCUMFERENCE 20.4203
+#define CM_PER_NOTCH (WHEEL_CIRCUMFERENCE / 20)
 #define TIMEOUT_THRESHOLD 1500000
 
 static int leftStopCounter = 0;

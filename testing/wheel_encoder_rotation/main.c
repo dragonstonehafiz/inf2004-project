@@ -78,8 +78,7 @@ void irq_handler(uint gpio, uint32_t events)
         {
             set_car_state(CAR_TURN_RIGHT);
             test_active = true;
-            leftNotchCount = 0;
-            rightNotchCount = 0;
+            resetEncoder();
             dist_to_travel = calc_dist_to_turn(90);
         }
         else if (gpio == BTN_INCREASE_SPEED)
@@ -105,8 +104,8 @@ bool encoderPrintCallback(struct repeating_timer *t)
 {
     if (test_active)
     {
-        printf("distanceToTravel:%0.2f\n", dist_to_travel);
-        printf("leftRPM:%0.2f, leftDist:%0.2f", leftEncoderSpeed, leftTotalDistance);
+        printf("distanceToTravel: %0.2f\n", dist_to_travel);
+        printf("leftRPM:%0.2f, leftDist:%0.2f", pid_left.current_speed, leftTotalDistance);
         // printf("rightRPM:%0.2f, rightDist:%0.2f", rightEncoderSpeed, rightTotalDistance);
     }
     return true;

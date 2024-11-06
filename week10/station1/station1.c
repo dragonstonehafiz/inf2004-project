@@ -7,6 +7,7 @@
 
 #define BTN_START 21
 #define ANGLE_TO_TURN 90
+#define FULL_ROTATION_CIRCUMFERENCE 76.0265
 
 /// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
 void change_state(uint8_t next_state);
@@ -46,38 +47,43 @@ void change_state(uint8_t next_state)
         case STATION_1_FIRST_PART:
             // Move the car forward at max speed
             set_car_state(CAR_FORWARD);
-            set_wheels_duty_cycle(1.f);
-            // Start timer
-            // add_repeating_timer_ms(250, ultrasonic_sensor_callback, NULL, &ultrasonic_timer);
-            printf("FIRST PART\n");
+            set_wheels_duty_cycle(0.5f);
+            // Enable pid so right wheel matches left wheel speed
+            pid_right.enabled = true;
+            // Also reset pid variables so previous values don't carry over
+            reset_pid();
             break;
         case STATION_1_TURN_IDLE:
             // Move the car forward at max speed
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
-            printf("TURN IDLE\n");
+            // This won't affect anything that happens since car is already set to stationary
+            // However, this does prevent the pid code from being run
+            pid_right.enabled = false;
             break;
         case STATION_1_TURN:
             set_car_state(CAR_TURN_RIGHT);
-            station1_state = STATION_1_TURN;
-            // cancel_repeating_timer(&ultrasonic_timer);
-            set_wheels_duty_cycle(1.f);
-            distToTravel = ((float)ANGLE_TO_TURN / 360.f) * 76.0265;
+            // Setting to 0.75f because its accurate but not slow
+            set_wheels_duty_cycle(0.75f);
+            distToTravel = ((float)ANGLE_TO_TURN / 360.f) * FULL_ROTATION_CIRCUMFERENCE;
             resetEncoder();
-            printf("TURN\n");
             break;
         case STATION_1_90_CM_IDLE:
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
-            printf("90 CM IDLE\n");
+            pid_right.enabled = false;
             break;
         case STATION_1_90_CM:
             set_car_state(CAR_FORWARD);
-            // Move the car forward at max speed
-            set_wheels_duty_cycle(1.f);
             distToTravel = 90;
             resetEncoder();
-            printf("90 CM\n");
+
+            // Move the car forward at max speed
+            set_wheels_duty_cycle(0.95f);
+            // Enable pid so right wheel matches left wheel speed
+            pid_right.enabled = true;
+            // Also reset pid variables so previous values don't carry over
+            reset_pid();
             break;
     }
 }
@@ -102,7 +108,7 @@ int main()
             station1_state == STATION_1_FIRST_PART)
         {
             float distance_to_item = getCm();
-            printf("%.2f\n", distance_to_item);
+            printf("Distance to item: %.2f\n", distance_to_item);
             if (distance_to_item <= 10.f && distance_to_item > 0.0f)
                 change_state(STATION_1_TURN_IDLE);
 
@@ -137,24 +143,25 @@ void irq_handler(uint gpio, uint32_t events)
         else if (station1_state == STATION_1_90_CM_IDLE)
             change_state(STATION_1_90_CM);
     }
-    else if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
+    else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
+    {
+        encoderCallback(gpio, events);
+    }
+    else if (gpio == WHEEL_ENCODER_LEFT_PIN)
     {
         encoderCallback(gpio, events);
 
+        // We use the left wheel to check total distance travelled
+        // Since right wheel is matching left wheels speed, and left wheel is used to turn 90 degrees
         if (leftTotalDistance >= distToTravel)
         {
-            switch (station1_state)
-            {
-                case STATION_1_TURN:
-                    change_state(STATION_1_90_CM_IDLE);
-                    break;
-                case STATION_1_90_CM:
-                    change_state(STATION_1_IDLE);
-                    break;
-                default:
-                    break;
-            }
+            if (station1_state == STATION_1_TURN)
+                change_state(STATION_1_90_CM_IDLE);
+            else if (station1_state == STATION_1_90_CM)
+                change_state(STATION_1_IDLE);
         }
+        // Next we match the right wheel's speed with the left wheel
+        pid_right.target_speed = pid_left.current_speed;
     }
 }
 
