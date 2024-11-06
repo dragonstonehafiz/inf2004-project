@@ -8,7 +8,7 @@
 #define BTN_START_TEST 21
 #define BTN_INCREASE_SPEED 20
 #define TEST_TIME 1500
-#define FULL_ROTATION_CIRCUMFERENCE 76.0265
+#define FULL_ROTATION_CIRCUMFERENCE 75.3982
 
 float duty_cycle = 0.5f;
 bool test_active = false;
@@ -24,14 +24,14 @@ float calc_dist_to_turn(float angle);
 int64_t end_test_callback(alarm_id_t id, void* user_data);
 struct repeating_timer encoderPrintTimer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
-bool encoderPrintCallback(struct repeating_timer *t);
+bool printCallback(struct repeating_timer *t);
 
 
 int main() 
 {
     init_gpio();
     init_inerrupts();
-    add_repeating_timer_ms(250, encoderPrintCallback, NULL, &encoderPrintTimer);
+    add_repeating_timer_ms(250, printCallback, NULL, &encoderPrintTimer);
 
     while (true) 
         tight_loop_contents();
@@ -79,7 +79,7 @@ void irq_handler(uint gpio, uint32_t events)
             set_car_state(CAR_TURN_RIGHT);
             test_active = true;
             resetEncoder();
-            dist_to_travel = calc_dist_to_turn(90);
+            dist_to_travel = calc_dist_to_turn(180);
         }
         else if (gpio == BTN_INCREASE_SPEED)
         {
@@ -100,13 +100,12 @@ void irq_handler(uint gpio, uint32_t events)
     }
 }
 
-bool encoderPrintCallback(struct repeating_timer *t)
+bool printCallback(struct repeating_timer *t)
 {
     if (test_active)
     {
         printf("distanceToTravel: %0.2f\n", dist_to_travel);
-        printf("leftRPM:%0.2f, leftDist:%0.2f", pid_left.current_speed, leftTotalDistance);
-        // printf("rightRPM:%0.2f, rightDist:%0.2f", rightEncoderSpeed, rightTotalDistance);
+        printf("leftDist:%0.2f\n", leftTotalDistance);
     }
     return true;
 }

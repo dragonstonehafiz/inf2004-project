@@ -7,28 +7,26 @@
 #define BTN_DECREASE_SPEED 22
 #define BTN_START_TEST 21
 #define BTN_INCREASE_SPEED 20
-#define TEST_TIME 5000
+#define BUTTON_DELAY 1500
 
 void init_gpio();
 void init_inerrupts();
 void irq_handler(uint gpio, uint32_t events);
 
 struct repeating_timer encoderPrintTimer;
-/// @brief checks the distance to the object in front of the car. If less than 10, stop 
-bool encoderPrintCallback(struct repeating_timer *t);
-
+/// @brief just prints data i want to see
+bool printCallback(struct repeating_timer *t);
+/// @brief only register button press after set time. This is so force applied doesn't affect wheels
+int64_t buttonDelayCallback(alarm_id_t id, void* user_data);
 
 int main() 
 {
     init_gpio();
     init_inerrupts();
-    add_repeating_timer_ms(250, encoderPrintCallback, NULL, &encoderPrintTimer);
+    add_repeating_timer_ms(250, printCallback, NULL, &encoderPrintTimer);
 
-    while (true) 
-    {
-        checkIfStopped();
+    while (true)
         tight_loop_contents();
-    }
 }
 
 void init_gpio() 
@@ -61,29 +59,40 @@ void irq_handler(uint gpio, uint32_t events)
         // If the wheel is already turning, set target speed to zero
         if (pid_left.duty_cycle != 0.00f)
         {
-            reset_pid();
             set_car_state(CAR_STATIONARY);
+            reset_pid();
+            pid_left.enabled = false;
             pid_right.enabled = false;
         }
         // If the wheel is stationary, set the target speed to max
         else
-        {
-            set_car_state(CAR_FORWARD);
-            set_wheels_duty_cycle(0.9f);
-            pid_right.enabled = true;
-            resetEncoder();
-        }
+            add_alarm_in_ms(BUTTON_DELAY, buttonDelayCallback, NULL, false);
     }
-    if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
+    else if (gpio == WHEEL_ENCODER_LEFT_PIN || gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
-        pid_right.target_speed = pid_left.current_speed;
+        if (gpio == WHEEL_ENCODER_LEFT_PIN)
+            pid_right.target_speed = pid_left.current_speed;
     }
 }
 
-bool encoderPrintCallback(struct repeating_timer *t)
+bool printCallback(struct repeating_timer *t)
 {
-    // printf("leftRPM:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
-    // printf("rightRPM:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
+    printf("\e[1;1H\e[2J");
+
+    // Print
+    printf(" left: %02.2f\nright: %02.2f\n", pid_left.current_speed, pid_right.current_speed);
+    printf(" left duty: %.2f\nright duty: %0.2f\n", pid_left.duty_cycle, pid_right.duty_cycle);
     return true;
+}
+
+int64_t buttonDelayCallback(alarm_id_t id, void* user_data)
+{
+    resetEncoder();
+    set_car_state(CAR_FORWARD);
+    // pid_left.target_speed = 18.f;
+    // pid_left.enabled = true;
+    pid_right.enabled = true;
+    set_wheels_duty_cycle(0.5);
+    return 0;
 }

@@ -8,8 +8,7 @@
 #include "pins.h"
 #include "wheels.h"
 
-#define WHEEL_CIRCUMFERENCE 20.4203
-#define CM_PER_NOTCH (WHEEL_CIRCUMFERENCE / 20)
+#define CM_PER_NOTCH 1.05
 #define TIMEOUT_THRESHOLD 1500000
 
 static int leftStopCounter = 0;
@@ -33,6 +32,19 @@ static inline void printEncoderData(void) {
            rightNotchCount, rightTotalDistance, pid_right.current_speed);
 }
 
+struct repeating_timer encoderTimer;
+// This timer is used to set detected speed to zero if too much time has passed without movement
+bool encoderTimerCallback(struct repeating_timer *t)
+{
+    uint64_t currentTime = time_us_64();
+    // If encoder hasn't chanfed for the set time, set speed to zero
+    if (currentTime - leftLastNotchTime > TIMEOUT_THRESHOLD)
+        pid_left.current_speed = 0.f;
+    if (currentTime - rightLastNotchTime > TIMEOUT_THRESHOLD)
+        pid_right.current_speed = 0.f;
+    return true;
+}
+
 // Combined encoder callback to handle both left and right encoder interrupts
 void encoderCallback(uint gpio, uint32_t events) {
     uint64_t currentTime = time_us_64();
@@ -45,6 +57,7 @@ void encoderCallback(uint gpio, uint32_t events) {
             leftNotchCount++;
             leftTotalDistance = (double)leftNotchCount * CM_PER_NOTCH;
             pid_left.current_speed = CM_PER_NOTCH / (timeDiff / 1e6);
+            
         } else {
             pid_left.current_speed = 0.0;
         }
@@ -101,6 +114,8 @@ void setupEncoderPins() {
 
     gpio_init(WHEEL_ENCODER_RIGHT_PIN);
     gpio_set_dir(WHEEL_ENCODER_RIGHT_PIN, GPIO_IN);
+
+    add_repeating_timer_ms(100, encoderTimerCallback, NULL, &encoderTimer);
 }
 
 // Resets the internal variables used to track distance travelled by encoder

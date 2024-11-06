@@ -20,14 +20,14 @@ void irq_handler(uint gpio, uint32_t events);
 int64_t end_test_callback(alarm_id_t id, void* user_data);
 struct repeating_timer encoderPrintTimer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
-bool encoderPrintCallback(struct repeating_timer *t);
+bool printCallback(struct repeating_timer *t);
 
 
 int main() 
 {
     init_gpio();
     init_inerrupts();
-    add_repeating_timer_ms(250, encoderPrintCallback, NULL, &encoderPrintTimer);
+    add_repeating_timer_ms(250, printCallback, NULL, &encoderPrintTimer);
 
     while (true) 
         tight_loop_contents();
@@ -87,7 +87,7 @@ void irq_handler(uint gpio, uint32_t events)
     }
 }
 
-bool encoderPrintCallback(struct repeating_timer *t)
+bool printCallback(struct repeating_timer *t)
 {
     if (test_active)
     {

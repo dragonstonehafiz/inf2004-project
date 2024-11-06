@@ -7,7 +7,8 @@
 
 #define BTN_START 21
 #define ANGLE_TO_TURN 90
-#define FULL_ROTATION_CIRCUMFERENCE 76.0265
+#define FULL_ROTATION_CIRCUMFERENCE 75.3982
+#define BUTTON_DELAY 1000
 
 /// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
 void change_state(uint8_t next_state);
@@ -29,6 +30,9 @@ struct repeating_timer ultrasonic_timer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
 bool ultrasonic_sensor_callback(struct repeating_timer *t);
 
+/// @brief only register button press after set time. This is so force applied doesn't affect wheels
+int64_t buttonDelayCallback(alarm_id_t id, void* user_data);
+
 // For turning task
 // This is how much the left wheel needs to turn when 
 float distToTravel = 0.f;
@@ -42,16 +46,15 @@ void change_state(uint8_t next_state)
         case STATION_1_IDLE:
             set_car_state(CAR_STATIONARY);
             set_wheels_duty_cycle(0.f);
-            printf("FIRST PART IDLE\n");
             break;
         case STATION_1_FIRST_PART:
             // Move the car forward at max speed
             set_car_state(CAR_FORWARD);
-            set_wheels_duty_cycle(0.5f);
-            // Enable pid so right wheel matches left wheel speed
-            pid_right.enabled = true;
             // Also reset pid variables so previous values don't carry over
             reset_pid();
+            // Enable pid so right wheel matches left wheel speed
+            pid_right.enabled = true;
+            set_wheels_duty_cycle(0.8f);
             break;
         case STATION_1_TURN_IDLE:
             // Move the car forward at max speed
@@ -64,7 +67,7 @@ void change_state(uint8_t next_state)
         case STATION_1_TURN:
             set_car_state(CAR_TURN_RIGHT);
             // Setting to 0.75f because its accurate but not slow
-            set_wheels_duty_cycle(0.75f);
+            set_wheels_duty_cycle(0.6f);
             distToTravel = ((float)ANGLE_TO_TURN / 360.f) * FULL_ROTATION_CIRCUMFERENCE;
             resetEncoder();
             break;
@@ -78,12 +81,12 @@ void change_state(uint8_t next_state)
             distToTravel = 90;
             resetEncoder();
 
-            // Move the car forward at max speed
-            set_wheels_duty_cycle(0.95f);
-            // Enable pid so right wheel matches left wheel speed
-            pid_right.enabled = true;
             // Also reset pid variables so previous values don't carry over
             reset_pid();
+            // Enable pid so right wheel matches left wheel speed
+            pid_right.enabled = true;
+            // Move the car forward at max speed
+            set_wheels_duty_cycle(0.8f);
             break;
     }
 }
@@ -104,7 +107,7 @@ int main()
         uint64_t current_time = time_us_64();
         uint64_t timediff = current_time - last_distance_check_time;
 
-        if (timediff > CHECK_INTERVAL_MS * 1000 && 
+        if (timediff > 100 * 1000 && 
             station1_state == STATION_1_FIRST_PART)
         {
             float distance_to_item = getCm();
@@ -114,7 +117,6 @@ int main()
 
             last_distance_check_time = current_time;
         }
-        
     }
     return 1;
 }
@@ -135,14 +137,7 @@ void init_interrupts()
 void irq_handler(uint gpio, uint32_t events)
 {
     if (gpio == BTN_START)
-    {
-        if (station1_state == STATION_1_IDLE)
-            change_state(STATION_1_FIRST_PART);
-        else if (station1_state == STATION_1_TURN_IDLE)
-            change_state(STATION_1_TURN);
-        else if (station1_state == STATION_1_90_CM_IDLE)
-            change_state(STATION_1_90_CM);
-    }
+        add_alarm_in_ms(BUTTON_DELAY, buttonDelayCallback, NULL, false);
     else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
     {
         encoderCallback(gpio, events);
@@ -160,8 +155,10 @@ void irq_handler(uint gpio, uint32_t events)
             else if (station1_state == STATION_1_90_CM)
                 change_state(STATION_1_IDLE);
         }
-        // Next we match the right wheel's speed with the left wheel
-        pid_right.target_speed = pid_left.current_speed;
+
+        // Set right wheel target speed to left wheel
+        if (pid_right.enabled)
+            pid_right.target_speed = pid_left.current_speed;
     }
 }
 
@@ -181,4 +178,14 @@ bool ultrasonic_sensor_callback(struct repeating_timer *t)
         cancel_repeating_timer(&ultrasonic_timer);
     }
     return true;
+}
+int64_t buttonDelayCallback(alarm_id_t id, void* user_data)
+{
+    if (station1_state == STATION_1_IDLE)
+        change_state(STATION_1_FIRST_PART);
+    else if (station1_state == STATION_1_TURN_IDLE)
+        change_state(STATION_1_TURN);
+    else if (station1_state == STATION_1_90_CM_IDLE)
+        change_state(STATION_1_90_CM);
+    return 0;
 }
