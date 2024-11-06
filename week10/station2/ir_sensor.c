@@ -117,12 +117,10 @@ void handle_line_tracing(MovementCallback callback)
 
 void ir_sensor_init()
 {
-    adc_init();
-    adc_gpio_init(IR_SENSOR_PIN);
-    adc_select_input(0);
-
     gpio_init(PULSE_PIN_BARCODE);
     gpio_set_dir(PULSE_PIN_BARCODE, GPIO_IN);
+    gpio_init(PIN_LINE_TRACING);
+    gpio_set_dir(PIN_LINE_TRACING, GPIO_IN);
 
     // Reset sensor status at the start
     reset_ir_sensor_status();
