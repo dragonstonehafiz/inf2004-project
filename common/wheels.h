@@ -26,8 +26,8 @@ typedef struct PID_VAR
     float duty_cycle;
     float integral;
     float prev_error;
-    bool turning; // this flag is used to make sure we don't try to change duty cycle if wheel is idle
-    bool enabled;
+    bool turning; // turning indicates if the wheel should be turning
+    bool enabled; // enabled indicates if pid should set duty cycle 
     uint64_t last_time;
 } PID_VAR;
 // Variables for controling pid speed
@@ -40,13 +40,10 @@ void init_wheels();
 /// @param nextState (CAR_STATIONARY, CAR_FORWARD, CAR_BACKWARD, CAR_TURN_RIGHT, CAR_TURN_LEFT)
 void set_car_state(uint8_t nextState);
 /// @brief sets the duty cycle of both wheels to the same value
-/// @param dutyCycle the duty cycle to set the wheels to
 void set_wheels_duty_cycle(float dutyCycle);
 /// @brief sets the duty cycle for the left wheel
-/// @param dutyCycle the duty cycle to set the wheel to
 void set_left_wheel_duty_cycle(float dutyCycle);
 /// @brief sets the duty cycle for the right wheel
-/// @param dutyCycle the duty cycle to set the wheel to
 void set_right_wheel_duty_cycle(float dutyCycle);
 
 struct repeating_timer pid_timer;
@@ -54,11 +51,7 @@ struct repeating_timer pid_timer;
 void compute_wheel_duty_cycle(PID_VAR * pid);
 /// @brief This is the function that will be to use a timer to calculate pid
 bool pid_timer_callback(struct repeating_timer *t);
-/// @brief Starts the pid timer
-void start_pid();
-/// @brief Ends the pid timer
-void end_pid();
-/// @brief Resets the pid variables for both wheels
+/// @brief Resets the pid variables for both wheels so no errors and integrals carry over
 void reset_pid();
 
 void init_wheels()
@@ -151,17 +144,16 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
 {
     float error = pid->target_speed - pid->current_speed;
     // Ideally both wheels should start at the same duty cycle so their speeds should be close
-    // This line makes sure there won'e be too big for the first step
-    if (error > 10.f)
-        return;
-    // Clamping integral because I'm worried it'll get crazy large if wheel is stationary for too long.
+    // This line makes sure that too large an error will not increase the integral by too much
+    // if (error > 10.f)
+    //     return;
     pid->integral += error;
     float derivative = error - pid->prev_error;
     // online formulas have delta time
     uint64_t now = time_us_64();
     float dt = (now - pid->last_time) / 1e6;
     // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
-    float step = (0.1 * error + 0.007 * (pid->integral) + 0.005 * derivative) * dt;
+    float step = (1.f * error + 0.007 * (pid->integral) + 0.005 * derivative) * dt;
     // This function is ideally being called 10 times a second, so we don't want to make the step too big
     if (step > MAX_STEP)
         step = MAX_STEP;
@@ -181,15 +173,14 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
+    // We only want to compute duty cycle if the pid is enabled (and turning)
     if (pid_left.enabled && pid_left.turning)
     {
-        // calculate the new duty cycle of the left wheel
         compute_wheel_duty_cycle(&pid_left);
         set_left_wheel_duty_cycle(pid_left.duty_cycle);
     }
     if (pid_right.enabled && pid_left.turning)
     {
-        // calculate duty cycle for right wheel
         compute_wheel_duty_cycle(&pid_right);
         set_right_wheel_duty_cycle(pid_right.duty_cycle);
     }

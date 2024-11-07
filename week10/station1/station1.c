@@ -9,6 +9,7 @@
 #define ANGLE_TO_TURN 90
 #define FULL_ROTATION_CIRCUMFERENCE 75.3982
 #define BUTTON_DELAY 1000
+#define DUTY_CYCLE 0.75
 
 /// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
 void change_state(uint8_t next_state);
@@ -54,7 +55,7 @@ void change_state(uint8_t next_state)
             reset_pid();
             // Enable pid so right wheel matches left wheel speed
             pid_right.enabled = true;
-            set_wheels_duty_cycle(0.8f);
+            set_wheels_duty_cycle(DUTY_CYCLE);
             break;
         case STATION_1_TURN_IDLE:
             // Move the car forward at max speed
@@ -86,7 +87,7 @@ void change_state(uint8_t next_state)
             // Enable pid so right wheel matches left wheel speed
             pid_right.enabled = true;
             // Move the car forward at max speed
-            set_wheels_duty_cycle(0.8f);
+            set_wheels_duty_cycle(DUTY_CYCLE);
             break;
     }
 }

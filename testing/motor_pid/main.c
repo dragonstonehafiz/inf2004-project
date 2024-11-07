@@ -8,6 +8,7 @@
 #define BTN_START_TEST 21
 #define BTN_INCREASE_SPEED 20
 #define BUTTON_DELAY 1500
+#define DUTY_CYCLE 0.75f
 
 void init_gpio();
 void init_inerrupts();
@@ -57,7 +58,7 @@ void irq_handler(uint gpio, uint32_t events)
     if (gpio == BTN_START_TEST)
     {
         // If the wheel is already turning, set target speed to zero
-        if (pid_left.duty_cycle != 0.00f)
+        if (pid_left.duty_cycle != 0.f)
         {
             set_car_state(CAR_STATIONARY);
             reset_pid();
@@ -93,6 +94,6 @@ int64_t buttonDelayCallback(alarm_id_t id, void* user_data)
     // pid_left.target_speed = 18.f;
     // pid_left.enabled = true;
     pid_right.enabled = true;
-    set_wheels_duty_cycle(0.5);
+    set_wheels_duty_cycle(DUTY_CYCLE);
     return 0;
 }
