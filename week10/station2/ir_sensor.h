@@ -11,7 +11,7 @@
 #define PIN_LINE_TRACING 17
 #define WIDE_FACTOR 2.5f
 #define PULSE_WIDTH_THRESHOLD 1000   // 0.001 second threshold for pulse width debounce
-#define TIMEOUT_THRESHOLD_US 1000000 // 0.5-second timeout threshold in microseconds
+#define TIMEOUT_THRESHOLD_US 750000 // 0.75-second timeout threshold in microseconds
 #define MAX_BARCODE_LENGTH 29
 #define BYTES_LENGTH 9
 #define BARCODE_BITS_LENGTH MAX_BARCODE_LENGTH *BYTES_LENGTH
