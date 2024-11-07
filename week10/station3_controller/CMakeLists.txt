@@ -15,7 +15,7 @@ target_include_directories(week10_station3_controller PRIVATE
 
 target_link_libraries(week10_station3_controller 
     pico_stdlib 
-    hardware_adc
+    hardware_adc hardware_i2c
     pico_cyw43_arch_lwip_threadsafe_background
     )
 
