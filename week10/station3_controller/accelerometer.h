@@ -293,18 +293,6 @@ char get_turn_direction_char(turn_direction_t turn_direction) {
     }
 }
 
-// char* serialize_movement_data(const movement_data_t* data) {
-//     static char buffer[MAX_DATA_STRING];
-//     snprintf(buffer, sizeof(buffer), "%lu,%c,%.1f,%c,%.1f\n",
-//         data->timestamp,
-//         get_movement_direction_char(data->forward_direction),
-//         data->forward_speed,
-//         get_turn_direction_char(data->turn_direction),
-//         data->turn_speed
-//     );
-//     return buffer;
-// }
-
 char* serialize_movement_data(const movement_data_t* data) {
     static char buffer[MAX_DATA_STRING];
     snprintf(buffer, sizeof(buffer), "PICO|%c:%.1f,%c:%.1f\n",

@@ -1,4 +1,5 @@
 #include "accelerometer.h"
+#include "udp.h"
 
 #define BUTTON_PIN 20  // Define the GPIO pin for the button
 
@@ -8,17 +9,6 @@ int main() {
     bool prev_button_state = true;  // true because of pull-up (not pressed)
 
     stdio_init_all();
-
-    printf("Connecting to Wi-Fi\n");
-
-    // Initialize Wi-Fi
-    if (cyw43_arch_init()) {
-        printf("Failed to initialize Wi-Fi.\n");
-        return -1;
-    }
-
-    // Enable station mode
-    cyw43_arch_enable_sta_mode();
    
     // Initialize accelerometer
     init_accelerometer();
@@ -28,28 +18,21 @@ int main() {
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
     gpio_pull_up(BUTTON_PIN);
+    
+    // Connect to wifi
+    connected = connect_to_wifi();
 
-    int retry_count = 0;
-    while (retry_count < MAX_WIFI_RETRIES) {
-        printf("Attempting to connect to WiFi... (%d/%d)\n", retry_count + 1, MAX_WIFI_RETRIES);
-        
-        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 
-            CYW43_AUTH_WPA2_AES_PSK, WIFI_CONNECT_TIMEOUT_MS) == 0) {
-            printf("Wi-Fi connected successfully.\n");
-            printf("IP Address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
-            initialize_udp();
-            connected = true;
-            break;
+    if (connected){
+        if (initialize_udp() == NULL) {
+            printf("UDP initialization failed\n");
+            connected = false;
+        } else {
+            printf("UDP initialized successfully\n");
         }
-        
-        printf("Wi-Fi connection attempt %d failed.\n", retry_count + 1);
-        retry_count++;
-        sleep_ms(10); // Wait before retrying
+    } else {
+        printf("WiFi connection failed\n");
     }
-
-    if (retry_count == MAX_WIFI_RETRIES) {
-        printf("Failed to connect to Wi-Fi after %d attempts. Exiting.\n", MAX_WIFI_RETRIES);
-    }
+    
 
     while(connected) {
         // Check button state
