@@ -7,6 +7,7 @@
 #include "wheels.h"
 #include "ir_sensor.h"
 #include "code39_decoder.h"
+#include "pins.h"
 #include "utils.h"
 
 #define BTN_20_PIN 20

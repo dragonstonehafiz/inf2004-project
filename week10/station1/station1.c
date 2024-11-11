@@ -26,7 +26,6 @@ enum STATION_1_STATE
 uint8_t station1_state = STATION_1_IDLE;
 
 // Timer variables and functions to manage polling of devices
-struct repeating_timer pid_timer;
 struct repeating_timer ultrasonic_timer;
 /// @brief checks the distance to the object in front of the car. If less than 10, stop 
 bool ultrasonic_sensor_callback(struct repeating_timer *t);

@@ -6,7 +6,12 @@ target_include_directories(
     )
 
 # pull in common dependencies
-target_link_libraries(week10_station1 pico_stdlib hardware_pwm)
+target_link_libraries(
+    week10_station1 
+    pico_stdlib 
+    hardware_pwm
+    common_lib
+    )
 
 target_include_directories(week10_station1 PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}

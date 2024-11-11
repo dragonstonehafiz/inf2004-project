@@ -19,6 +19,7 @@ target_link_libraries(
     hardware_adc 
     hardware_gpio
     hardware_timer
+    common_lib
 )
 
 target_include_directories(week10_station2 PRIVATE
