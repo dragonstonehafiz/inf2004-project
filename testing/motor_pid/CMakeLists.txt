@@ -6,7 +6,12 @@ target_include_directories(
     )
 
 # pull in common dependencies
-target_link_libraries(TEST_MOTOR_PID pico_stdlib hardware_pwm)
+target_link_libraries(
+    TEST_MOTOR_PID 
+    pico_stdlib 
+    hardware_pwm
+    common_lib
+    )
 
 target_include_directories(TEST_MOTOR_PID PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}

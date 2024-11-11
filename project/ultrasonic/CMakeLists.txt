@@ -1,7 +1,13 @@
 add_executable(ultrasonic ultrasonic.c)
 
 # pull in common dependencies
-target_link_libraries(ultrasonic pico_stdlib hardware_timer hardware_pwm)
+target_link_libraries(
+    ultrasonic
+    pico_stdlib 
+    hardware_timer
+    hardware_pwm
+    common_lib
+    )
 
 target_include_directories(ultrasonic PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}

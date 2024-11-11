@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "wheels.h"
 #include "encoder.h"
+#include "pins.h"
 
 #define BTN_DECREASE_SPEED 22
 #define BTN_START_TEST 21

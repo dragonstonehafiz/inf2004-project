@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "wheels.h"
 #include "encoder.h"
+#include "pins.h"
 
 #define BTN_DECREASE_SPEED 22
 #define BTN_START_TEST 21
@@ -70,8 +71,7 @@ void irq_handler(uint gpio, uint32_t events)
             set_car_state(CAR_FORWARD);
             test_active = true;
             add_alarm_in_ms(TEST_TIME, end_test_callback, NULL, false);
-            leftNotchCount = 0;
-            rightNotchCount = 0;
+            resetEncoder();
         }
         else if (gpio == BTN_INCREASE_SPEED)
         {
@@ -91,8 +91,8 @@ bool printCallback(struct repeating_timer *t)
 {
     if (test_active)
     {
-        printf("leftSpeed:%0.2f, leftDist:%0.2f, leftNotchCount:%d\n", leftEncoderSpeed, leftTotalDistance, leftNotchCount);
-        printf("rightSpeed:%0.2f, rightDist:%0.2f, rightNotchCount:%d\n", rightEncoderSpeed, rightTotalDistance, rightNotchCount);
+        printf(" left: %02.2f\nright: %02.2f\n", pid_left.current_speed, pid_right.current_speed);
+        printf(" left duty: %.2f\nright duty: %0.2f\n", pid_left.duty_cycle, pid_right.duty_cycle);
     }
     return true;
 }

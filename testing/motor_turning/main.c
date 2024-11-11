@@ -2,6 +2,7 @@
 #include "hardware/pwm.h"
 #include <stdio.h>
 #include "wheels.h"
+#include "pins.h"
 
 #define BTN_20_PIN 20
 #define BTN_21_PIN 21
@@ -18,9 +19,7 @@ int main()
     init_gpio();
 
     while (true) 
-    {
         tight_loop_contents();
-    }
 }
 
 void init_gpio() 

@@ -6,7 +6,11 @@ target_include_directories(
     )
 
 # pull in common dependencies
-target_link_libraries(TEST_WHEEL_ENCODER_ROTATION pico_stdlib hardware_pwm)
+target_link_libraries(
+    TEST_WHEEL_ENCODER_ROTATION
+    pico_stdlib
+    hardware_pwm
+    common_lib)
 
 target_include_directories(TEST_WHEEL_ENCODER_ROTATION PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}
