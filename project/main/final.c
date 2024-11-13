@@ -5,6 +5,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 
+#include "states.h"
+
 #define UDP_PORT 4444
 #define MAX_WIFI_RETRIES 3
 #define WIFI_CONNECT_TIMEOUT_MS 10000

@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-add_subdirectory(accelerometer)
 add_subdirectory(ultrasonic)
-add_subdirectory(encoder)
 
 if (NOT PICO_NO_HARDWARE)
 

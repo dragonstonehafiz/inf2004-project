@@ -3,6 +3,7 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         main
         final.c
         )
+
     target_compile_definitions(main PRIVATE
         WIFI_SSID=\"${WIFI_SSID}\"
         WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
@@ -13,7 +14,6 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         
     target_include_directories(
         main PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
         )
 
     target_link_libraries(main 
@@ -21,8 +21,10 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         hardware_adc
         pico_cyw43_arch_lwip_sys_freertos
         pico_lwip_iperf
+        FreeRTOS-Kernel-Heap4
         common_lib
         )
+
     pico_add_extra_outputs(main)
     pico_enable_stdio_usb(main 1)
 endif()
