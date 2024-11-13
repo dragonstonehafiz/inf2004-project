@@ -11,6 +11,7 @@ target_link_libraries(
     pico_stdlib 
     hardware_pwm
     common_lib
+    m
     )
 
 target_include_directories(week10_station1 PRIVATE
