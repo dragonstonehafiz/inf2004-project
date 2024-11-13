@@ -3,15 +3,22 @@
 
 #include "pico/stdlib.h"
 
-enum PROGRAM_STATES
+extern uint8_t currState;
+
+enum STATES_FINAL
 {
-    STATE_IDLE = 0,
+    STATE_INITIAL = 0,
+    STATE_CONNECTING,
     STATE_REMOTE,
     STATE_AUTO,
+    STATE_END,
+    STATE_SERVER_ERROR,
     
     STATE_NUM
 };
 
-uint8_t currState = STATE_IDLE;
+void changeState(uint8_t nextState);
+void updateCore0();
+void updateCore1();
 
 #endif

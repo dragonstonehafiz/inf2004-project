@@ -1,10 +1,13 @@
 if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
     add_executable(
-        main
-        final.c
+        main_car
+        main.c
+        setup.c
+        reciever.c
+        states.c
         )
 
-    target_compile_definitions(main PRIVATE
+    target_compile_definitions(main_car PRIVATE
         WIFI_SSID=\"${WIFI_SSID}\"
         WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
         NO_SYS=0            # don't want NO_SYS (generally this would be in your lwipopts.h)
@@ -13,10 +16,10 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         )
         
     target_include_directories(
-        main PRIVATE
+        main_car PRIVATE
         )
 
-    target_link_libraries(main 
+    target_link_libraries(main_car 
         pico_stdlib 
         hardware_adc
         pico_cyw43_arch_lwip_sys_freertos
@@ -25,6 +28,6 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         common_lib
         )
 
-    pico_add_extra_outputs(main)
-    pico_enable_stdio_usb(main 1)
+    pico_add_extra_outputs(main_car)
+    pico_enable_stdio_usb(main_car 1)
 endif()
