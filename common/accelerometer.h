@@ -24,42 +24,27 @@
 #define MAG_SCALE (1.0 / 1100.0)  // Magnetometer scale for ±1.3 gauss range (1100 LSB/gauss)
 
 // Thresholds for movements
-#define FORWARD_BACKWARD_THRESHOLD (15.0/180.0 * M_PI)  // Threshold for forward/backward movement
-#define TURN_THRESHOLD (15.0/180.0 * M_PI)               // Threshold for turning
+#define THRESHOLD (15.0/180.0 * M_PI)  // Threshold for forward/backward movement
 #define MAX_SPEED 100                    // Max speed percentage
 
-// Direction enums for clearer return values
-typedef enum {
-    DIRECTION_NONE,
-    DIRECTION_FORWARD,
-    DIRECTION_BACKWARD
-} movement_direction_t;
+enum DIRECTION
+{
+  DIRECTION_NONE = 0,
+  DIRECTION_POSITIVE,
+  DIRECTION_NEGATIVE  
+};
 
-typedef enum {
-    TURN_NONE,
-    TURN_LEFT,
-    TURN_RIGHT
-} turn_direction_t;
-
-// Struct to hold movement commands
-typedef struct {
-    movement_direction_t direction;
-    float speed_percentage;
-} movement_command_t;
- 
-typedef struct {
-    turn_direction_t direction;
-    float turn_percentage;
-} turn_command_t;
+typedef struct 
+{
+    uint8_t dir;
+    float speed;
+} MOVEMENT_DATA;
 
 
 typedef struct {
-    movement_direction_t forward_direction;
-    float forward_speed;
-    turn_direction_t turn_direction;
-    float turn_speed;
-    uint32_t timestamp;
-} movement_data_t;
+    MOVEMENT_DATA forward;
+    MOVEMENT_DATA turn;
+} SEND_DATA;
 
 
 // Function to scan I2C bus for connected devices
@@ -198,82 +183,35 @@ float convert_to_discrete_percentage(float input_percentage)
     }
 }
 
-movement_command_t get_command_forward(float pitch) 
+MOVEMENT_DATA get_command(float angle)
 {
-    movement_command_t command = {DIRECTION_NONE, 0.0f};
-    
-    // Debug print to see actual pitch value
-    // printf("Current pitch (radians): %f, Threshold: %f\n", pitch, FORWARD_BACKWARD_THRESHOLD);
-    
+    MOVEMENT_DATA command = {DIRECTION_NONE, 0.0f};
     // Check if within ±30 degrees threshold
-    if (pitch <= FORWARD_BACKWARD_THRESHOLD && pitch >= -FORWARD_BACKWARD_THRESHOLD) 
+    if (angle <= THRESHOLD && angle >= -THRESHOLD) 
     {
         // Within threshold - set to stop
-        command.direction = DIRECTION_NONE;
-        command.speed_percentage = 0.0f;
+        command.dir = DIRECTION_NONE;
+        command.speed = 0.0f;
     }
-    else if (pitch > FORWARD_BACKWARD_THRESHOLD) 
+    else if (angle > THRESHOLD) 
     {
         // Moving forward
-        command.direction = DIRECTION_FORWARD;
-        command.speed_percentage = convert_to_discrete_percentage((pitch / M_PI_2) * MAX_SPEED);
-        if (command.speed_percentage > MAX_SPEED) 
-            command.speed_percentage = MAX_SPEED;
+        command.dir = DIRECTION_POSITIVE;
+        command.speed = convert_to_discrete_percentage((angle / M_PI_2) * MAX_SPEED);
+        if (command.speed > MAX_SPEED) 
+            command.speed = MAX_SPEED;
     }
-    else if (pitch < -FORWARD_BACKWARD_THRESHOLD) 
+    else if (angle < -THRESHOLD) 
     {
         // Moving backward
-        command.direction = DIRECTION_BACKWARD;
-        command.speed_percentage = convert_to_discrete_percentage((-pitch / M_PI_2) * MAX_SPEED);
-        if (command.speed_percentage > MAX_SPEED) 
-            command.speed_percentage = MAX_SPEED;
+        command.dir = THRESHOLD;
+        command.speed = convert_to_discrete_percentage((-angle / M_PI_2) * MAX_SPEED);
+        if (command.speed > MAX_SPEED) 
+            command.speed = MAX_SPEED;
     }
     
     return command;
 }
-
-turn_command_t get_command_turn(float roll) 
-{
-    turn_command_t command = {TURN_NONE, 0.0f};
-    
-    // Check if within ±30 degrees threshold
-    if (roll <= TURN_THRESHOLD && roll >= -TURN_THRESHOLD) 
-    {
-        // Within threshold - set to stop
-        command.direction = TURN_NONE;  // Note: Changed from DIRECTION_NONE to TURN_NONE
-        command.turn_percentage = 0.0f;
-    }
-    // Check for turning left or right based on roll angle
-    else if (roll > TURN_THRESHOLD) 
-    {
-        // Turning right
-        command.direction = TURN_RIGHT;
-        command.turn_percentage = convert_to_discrete_percentage((roll / M_PI_2) * MAX_SPEED);
-        if (command.turn_percentage > MAX_SPEED) 
-            command.turn_percentage = MAX_SPEED;
-    }
-    else if (roll < -TURN_THRESHOLD) 
-    {
-        // Turning left
-        command.direction = TURN_LEFT;
-        command.turn_percentage = convert_to_discrete_percentage((-roll / M_PI_2) * MAX_SPEED);
-        if (command.turn_percentage > MAX_SPEED) 
-            command.turn_percentage = MAX_SPEED;
-    }
-    
-    // Debug output
-    // if (command.direction != TURN_NONE) {
-    //     printf("Command: Turn %s at %.1f%% speed\n", 
-    //            command.direction == TURN_RIGHT ? "right" : "left",
-    //            command.turn_percentage);
-    // } else {
-    //     printf("Command: Stop turning\n");
-    // }
-    
-    return command;
-}
-
-
 
 char get_movement_direction_char(movement_direction_t forward_direction) {
     switch(forward_direction) {

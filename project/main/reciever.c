@@ -28,7 +28,8 @@ int connect_to_wifi()
 {
     // Connect to WiFi
     int retry_count = 0;
-    while (retry_count < MAX_WIFI_RETRIES) {
+    while (retry_count < MAX_WIFI_RETRIES) 
+    {
         printf("Attempting to connect to WiFi... (%d/%d)\n", retry_count + 1, MAX_WIFI_RETRIES);
         
         if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 
@@ -38,12 +39,6 @@ int connect_to_wifi()
             
             // Initialize UDP server after WiFi connection
             init_udp_server();
-            
-            // Keep the program running
-            while(true) {
-                // The callback will handle incoming packets
-                sleep_ms(10);
-            }
             break;
         }
         
