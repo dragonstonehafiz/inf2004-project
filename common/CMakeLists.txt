@@ -6,6 +6,8 @@ add_library(common_lib
         encoder.c
         motor.h
         motor.c
+        ultrasonic.c
+        ultrasonic.h
         wheels.h
         wheels.c
         )

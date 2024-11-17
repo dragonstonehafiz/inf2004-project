@@ -21,7 +21,7 @@ volatile uint32_t rightNotchCount = 0;
 volatile double rightTotalDistance = 0.0;
 volatile uint64_t rightLastNotchTime = 0;
 
-// Timer for reseting encoder values after a period of idlen
+// Timer for reseting encoder values after a period of idleness
 struct repeating_timer encoderTimer;
 
 // Function to print current encoder data for both wheels
@@ -36,7 +36,7 @@ static inline void printEncoderData(void) {
 bool encoderTimerCallback(struct repeating_timer *t)
 {
     uint64_t currentTime = time_us_64();
-    // If encoder hasn't chanfed for the set time, set speed to zero
+    // If encoder hasn't changed after the set time, set speed to zero
     if (currentTime - leftLastNotchTime > TIMEOUT_THRESHOLD)
         pid_left.current_speed = 0.f;
     if (currentTime - rightLastNotchTime > TIMEOUT_THRESHOLD)

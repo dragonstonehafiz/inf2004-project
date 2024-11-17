@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "wheels.h"
 #include "ultrasonic.h"
+#include "pins.h"
 #include "encoder.h"
 
 #define BTN_START 21
@@ -110,7 +111,11 @@ int main()
         if (timediff > 100 * 1000 && 
             station1_state == STATION_1_FIRST_PART)
         {
+            triggerPulse();  // Initiate the pulse to start the measurement
+
+            sleep_ms(30);  // Small delay to ensure echo is received if object is close
             float distance_to_item = getCm();
+
             printf("Distance to item: %.2f\n", distance_to_item);
             if (distance_to_item <= 10.f && distance_to_item > 0.0f)
                 change_state(STATION_1_TURN_IDLE);
@@ -133,6 +138,7 @@ void init_interrupts()
     gpio_set_irq_enabled_with_callback(BTN_START, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
     gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_RIGHT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
     gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_LEFT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+    gpio_set_irq_enabled_with_callback(ECHO_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &irq_handler);
 }
 void irq_handler(uint gpio, uint32_t events)
 {
@@ -160,6 +166,8 @@ void irq_handler(uint gpio, uint32_t events)
         if (pid_right.enabled)
             pid_right.target_speed = pid_left.current_speed;
     }
+    else if (gpio == ECHO_PIN)
+        echo_pin_handler(gpio, events);
 }
 
 bool ultrasonic_sensor_callback(struct repeating_timer *t)

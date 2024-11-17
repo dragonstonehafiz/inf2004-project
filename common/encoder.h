@@ -7,8 +7,6 @@
 // Making these extern so you can get encoder distance just by including the encoder.h file
 volatile extern double leftTotalDistance;
 volatile extern double rightTotalDistance;
-volatile extern double leftTotalDistance;
-volatile extern double rightTotalDistance;
 
 static inline void printEncoderData(void);
 bool encoderTimerCallback(struct repeating_timer *t);

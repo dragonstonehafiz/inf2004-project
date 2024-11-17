@@ -1,8 +1,9 @@
 if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
-    add_executable(lab5_rtos
-                   lab5_rtos.c
-            ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c
-            )
+    add_executable(
+        lab5_rtos
+        lab5_rtos.c
+        ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c
+        )
     target_compile_definitions(lab5_rtos PRIVATE
             WIFI_SSID=\"${WIFI_SSID}\"
             WIFI_PASSWORD=\"${WIFI_PASSWORD}\"

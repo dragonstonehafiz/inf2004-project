@@ -1,4 +1,12 @@
+#include "pico/stdlib.h"
+#include "stdio.h"
 #include "ultrasonic.h"
+#include "pins.h"
+
+// Interval in milliseconds for checking the distance
+#define CHECK_INTERVAL_MS 200
+// Distance threshold for the buzzer activation in centimeters
+#define DISTANCE_THRESHOLD_CM 10.0
 
 int main()
 {
