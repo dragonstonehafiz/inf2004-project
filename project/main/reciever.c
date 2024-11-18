@@ -6,6 +6,27 @@
 #define MAX_WIFI_RETRIES 3
 #define WIFI_CONNECT_TIMEOUT_MS 10000
 
+// Global variable to store movement data
+static movement_data_t movement_data = {"unknown", 'N', 0.0f, 'N', 0.0f};
+
+// Global variable to see if new data received
+static bool new_data_received = false;
+
+// Putting declarations here so outside classes don't see things they shouldn't use
+void init_udp_server();
+void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+
+movement_data_t *get_movement_data(void) 
+{
+    if (new_data_received)
+    {
+        new_data_received = false;
+        return &movement_data;
+    }
+    else
+        return NULL;
+}
+
 int init_server()
 {
     // Initialize WiFi
@@ -49,42 +70,36 @@ int connect_to_wifi()
 
 }
 
-void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
-{
-    if (p != NULL) 
-    {
-        // Create a buffer for the received data
+void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+    if (p != NULL) {
         char* received_data = (char*)malloc(p->len + 1);
         memcpy(received_data, p->payload, p->len);
-        received_data[p->len] = '\0';  // Null terminate the string
-
-        // Variables to store parsed data  
-        char device_name[32];
-        char movement_dir;
-        char turn_dir;
-        float forward_speed;
-        float turn_speed;
+        received_data[p->len] = '\0';
         
-        // Parse the device name and data
         char* data_part = strchr(received_data, '|');
         if (data_part != NULL) {
-            // Extract device name
             int device_name_len = data_part - received_data;
-            strncpy(device_name, received_data, device_name_len);
-            device_name[device_name_len] = '\0';
+            strncpy(movement_data.device_name, received_data, device_name_len);
+            movement_data.device_name[device_name_len] = '\0';
             
-            // Move pointer past the '|'
             data_part++;
             
-            // Parse the movement and turn data
-            if (sscanf(data_part, "%c:%f,%c:%f", 
-                   &movement_dir, &forward_speed, 
-                   &turn_dir, &turn_speed) == 4) {
-                
-                printf("Device: %s, Movement: %c (%.1f%%), Turn: %c (%.1f%%)\n",
-                       device_name, movement_dir, forward_speed, 
-                       turn_dir, turn_speed);
+            char f_dir, t_dir;
+            float f_perc, t_perc;
+            
+            if (sscanf(data_part, "%c:%f,%c:%f", &f_dir, &f_perc, &t_dir, &t_perc) == 4) {
+                // Only update global data if parsing was successful
+                movement_data.forward_direction = f_dir;
+                movement_data.forward_percentage = f_perc;
+                movement_data.turn_direction = t_dir;
+                movement_data.turn_percentage = t_perc;
+
+                new_data_received = true;                
+            } else {
+                printf("Failed to parse movement data\n");
             }
+        } else {
+            printf("Invalid data format - missing '|' separator\n");
         }
 
         free(received_data);

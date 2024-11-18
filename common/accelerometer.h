@@ -24,27 +24,28 @@
 #define MAG_SCALE (1.0 / 1100.0)  // Magnetometer scale for ±1.3 gauss range (1100 LSB/gauss)
 
 // Thresholds for movements
-#define THRESHOLD (15.0/180.0 * M_PI)  // Threshold for forward/backward movement
+#define FORWARD_BACKWARD_THRESHOLD (15.0/180.0 * M_PI)  // Threshold for forward/backward movement
+#define TURN_THRESHOLD (15.0/180.0 * M_PI)               // Threshold for turning
 #define MAX_SPEED 100                    // Max speed percentage
-
-enum DIRECTION
-{
-  DIRECTION_NONE = 0,
-  DIRECTION_POSITIVE,
-  DIRECTION_NEGATIVE  
-};
-
-typedef struct 
-{
-    uint8_t dir;
-    float speed;
-} MOVEMENT_DATA;
 
 
 typedef struct {
-    MOVEMENT_DATA forward;
-    MOVEMENT_DATA turn;
-} SEND_DATA;
+    char forward_direction;
+    float forward_percentage;
+    char turn_direction;
+    float turn_percentage;  // Changed from turn_speed to match the struct usage
+} movement_data_t;
+
+
+// Function declarations
+static void i2c_scan(void);
+void init_accelerometer(void);
+static void lsm303dlhc_read_raw(int16_t accel[3], int16_t mag[3]);
+void calculate_angles(float* pitch, float* roll, float* yaw);
+float convert_to_discrete_percentage(float input_percentage);
+movement_data_t get_command(float pitch, float roll, movement_data_t movement);
+char* serialize_movement_data(const movement_data_t* data);
+void get_data_to_send(void);
 
 
 // Function to scan I2C bus for connected devices
@@ -183,94 +184,93 @@ float convert_to_discrete_percentage(float input_percentage)
     }
 }
 
-MOVEMENT_DATA get_command(float angle)
+// Get forward and turn command at once
+movement_data_t get_command(float pitch, float roll, movement_data_t movement) 
 {
-    MOVEMENT_DATA command = {DIRECTION_NONE, 0.0f};
     // Check if within ±30 degrees threshold
-    if (angle <= THRESHOLD && angle >= -THRESHOLD) 
+    if (pitch <= FORWARD_BACKWARD_THRESHOLD && pitch >= -FORWARD_BACKWARD_THRESHOLD) 
     {
         // Within threshold - set to stop
-        command.dir = DIRECTION_NONE;
-        command.speed = 0.0f;
+        movement.forward_direction = 'N';
+        movement.forward_percentage = 0.0f;  // Changed from speed_percentage
     }
-    else if (angle > THRESHOLD) 
+    else if (pitch > FORWARD_BACKWARD_THRESHOLD) 
     {
         // Moving forward
-        command.dir = DIRECTION_POSITIVE;
-        command.speed = convert_to_discrete_percentage((angle / M_PI_2) * MAX_SPEED);
-        if (command.speed > MAX_SPEED) 
-            command.speed = MAX_SPEED;
+        movement.forward_direction = 'F';
+        movement.forward_percentage = convert_to_discrete_percentage((pitch / M_PI_2) * MAX_SPEED);
+        if (movement.forward_percentage > MAX_SPEED) 
+            movement.forward_percentage = MAX_SPEED;
     }
-    else if (angle < -THRESHOLD) 
+    else if (pitch < -FORWARD_BACKWARD_THRESHOLD) 
     {
         // Moving backward
-        command.dir = THRESHOLD;
-        command.speed = convert_to_discrete_percentage((-angle / M_PI_2) * MAX_SPEED);
-        if (command.speed > MAX_SPEED) 
-            command.speed = MAX_SPEED;
+        movement.forward_direction = 'B';
+        movement.forward_percentage = convert_to_discrete_percentage((-pitch / M_PI_2) * MAX_SPEED);
+        if (movement.forward_percentage > MAX_SPEED) 
+            movement.forward_percentage = MAX_SPEED;
     }
-    
-    return command;
+
+    // Turn commands remain unchanged
+    if (roll <= TURN_THRESHOLD && roll >= -TURN_THRESHOLD) 
+    {
+        movement.turn_direction = 'N';
+        movement.turn_percentage = 0.0f;
+    }
+    else if (roll > TURN_THRESHOLD) 
+    {
+        movement.turn_direction = 'R';
+        movement.turn_percentage = convert_to_discrete_percentage((roll / M_PI_2) * MAX_SPEED);
+        if (movement.turn_percentage > MAX_SPEED) 
+            movement.turn_percentage = MAX_SPEED;
+    }
+    else if (roll < -TURN_THRESHOLD) 
+    {
+        movement.turn_direction = 'L';
+        movement.turn_percentage = convert_to_discrete_percentage((-roll / M_PI_2) * MAX_SPEED);
+        if (movement.turn_percentage > MAX_SPEED) 
+            movement.turn_percentage = MAX_SPEED;
+    }
+
+    return movement;
 }
 
-char get_movement_direction_char(movement_direction_t forward_direction) {
-    switch(forward_direction) {
-        case DIRECTION_FORWARD:  return 'F';
-        case DIRECTION_BACKWARD: return 'B';
-        case DIRECTION_NONE:     return 'N';
-        default:                 return 'N';
-    }
-}
 
-char get_turn_direction_char(turn_direction_t turn_direction) {
-    switch(turn_direction) {
-        case TURN_LEFT:  return 'L';
-        case TURN_RIGHT: return 'R';
-        case TURN_NONE:  return 'N';
-        default:         return 'N';
-    }
-}
-
+// Function to serialize movement data
 char* serialize_movement_data(const movement_data_t* data) {
     static char buffer[MAX_DATA_STRING];
     snprintf(buffer, sizeof(buffer), "PICO|%c:%.1f,%c:%.1f\n",
-        get_movement_direction_char(data->forward_direction),
-        data->forward_speed,
-        get_turn_direction_char(data->turn_direction),
-        data->turn_speed
+        data->forward_direction,
+        data->forward_percentage,  // Changed from speed_percentage
+        data->turn_direction,
+        data->turn_percentage
     );
     return buffer;
 }
 
-void get_data_to_send() {
-    static float prev_forward_speed = 0.0f;
+void get_data_to_send(void) {
+    static float prev_forward_percentage = 0.0f;  // Changed from prev_forward_speed
     static float prev_turn_speed = 0.0f;
-    static movement_direction_t prev_forward_dir = DIRECTION_NONE;
-    static turn_direction_t prev_turn_dir = TURN_NONE;
-    
+    static char prev_forward_dir = 'N';
+    static char prev_turn_dir = 'N';
+
+    // Initialize movement_data_t
+    movement_data_t movement_data = {'N', 0.0f, 'N', 0.0f};
+
     float pitch, roll, yaw;
-    movement_data_t movement_data;
     char* data_to_send;
 
     // Read accelerometer data
     calculate_angles(&pitch, &roll, &yaw);
     
     // Process movement commands
-    movement_command_t forward_command = get_command_forward(pitch);
-    turn_command_t turn_command = get_command_turn(roll);
-
-    // Update movement data structure
-    movement_data.forward_direction = forward_command.direction;
-    movement_data.forward_speed = forward_command.speed_percentage;
-    movement_data.turn_direction = turn_command.direction;
-    movement_data.turn_speed = turn_command.turn_percentage;
-    movement_data.timestamp = to_ms_since_boot(get_absolute_time());
+    movement_data = get_command(pitch, roll, movement_data);
 
     // Check if current data is different from previous data
     if (movement_data.forward_direction != prev_forward_dir ||
-        movement_data.forward_speed != prev_forward_speed ||
+        movement_data.forward_percentage != prev_forward_percentage ||  // Changed from prev_forward_speed
         movement_data.turn_direction != prev_turn_dir ||
-        movement_data.turn_speed != prev_turn_speed) {
+        movement_data.turn_percentage != prev_turn_speed) {
         
         // Data has changed, send it
         data_to_send = serialize_movement_data(&movement_data);
@@ -278,8 +278,8 @@ void get_data_to_send() {
 
         // Update previous values
         prev_forward_dir = movement_data.forward_direction;
-        prev_forward_speed = movement_data.forward_speed;
+        prev_forward_percentage = movement_data.forward_percentage;  // Changed from prev_forward_speed
         prev_turn_dir = movement_data.turn_direction;
-        prev_turn_speed = movement_data.turn_speed;
+        prev_turn_speed = movement_data.turn_percentage;
     }
 }

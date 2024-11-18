@@ -2,6 +2,8 @@
 set(target common_lib)
 
 add_library(common_lib
+        accelerometer.h
+        udp.h
         encoder.h
         encoder.c
         motor.h
