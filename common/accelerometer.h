@@ -165,23 +165,21 @@ float convert_to_discrete_percentage(float input_percentage)
         return 0.0f;
     }
     else if (input_percentage > 15.0f && input_percentage <= 30.0f) {
-        return 20.0f;
+        return 0.2f;
     }
     else if (input_percentage > 30.0f && input_percentage <= 45.0f) {
-        return 40.0f;
+        return 0.4f;
     }
     else if (input_percentage > 45.0f && input_percentage <= 60.0f) {
-        return 60.0f;
+        return 0.6f;
     }
     else if (input_percentage > 60.0f && input_percentage <= 75.0f) {
-        return 80.0f;
+        return 0.8f;
     }
-    else if (input_percentage > 75.0f && input_percentage <= 90.0f) {
-        return 100.0f;
+    else if (input_percentage > 75.0f) {
+        return 1.0f;
     }
-    else {  // > 90.0f
-        return 100.0f;
-    }
+    return 1.0f;
 }
 
 // Get forward and turn command at once

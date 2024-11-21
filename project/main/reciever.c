@@ -1,6 +1,7 @@
 #include "reciever.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "states.h"
 
 #define UDP_PORT 4444
 #define MAX_WIFI_RETRIES 3
@@ -60,6 +61,7 @@ int connect_to_wifi()
             
             // Initialize UDP server after WiFi connection
             init_udp_server();
+            changeState(STATE_REMOTE);
             break;
         }
         
@@ -94,7 +96,7 @@ void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const 
                 movement_data.turn_direction = t_dir;
                 movement_data.turn_percentage = t_perc;
 
-                new_data_received = true;                
+                new_data_received = true;
             } else {
                 printf("Failed to parse movement data\n");
             }
