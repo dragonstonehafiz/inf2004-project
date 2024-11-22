@@ -4,8 +4,8 @@ add_executable(
     )
 
 target_compile_definitions(main_controller PRIVATE
-    WIFI_SSID=\"${WIFI_SSID}\"
-    WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+    WIFI_SSID=\"bighowdy\"
+    WIFI_PASSWORD=\"yeedyourlasthaw\"
     )
     
 target_include_directories(main_controller PRIVATE

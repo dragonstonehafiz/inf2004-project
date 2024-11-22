@@ -9,9 +9,9 @@
 #include "lwip/udp.h"
 
 // Define constants
-#define UDP_PORT 4445
+#define UDP_PORT 4444
 #define BEACON_MSG_LEN_MAX 127
-#define BEACON_TARGET "172.20.10.2"
+#define BEACON_TARGET "192.168.1.115"
 #define BEACON_INTERVAL_MS 10
 #define WIFI_CONNECT_TIMEOUT_MS 10000
 #define MAX_WIFI_RETRIES 3
@@ -23,6 +23,9 @@ static struct udp_pcb* udp_pcb = NULL;
 struct udp_pcb* initialize_udp(void);
 void send_udp_data(const char* data);
 bool connect_to_wifi();
+
+char wifi_ssid[] = "SINGTEL-WWY2";
+char wifi_pwd[] = "fefkxa7v34";
 
 // Function implementations
 struct udp_pcb* initialize_udp() {
@@ -86,9 +89,9 @@ bool connect_to_wifi() {
 
     int retry_count = 0;
     while (retry_count < MAX_WIFI_RETRIES) {
-        printf("Attempting to connect to WiFi... (%d/%d)\n", retry_count + 1, MAX_WIFI_RETRIES);
+        printf("Attempting to connect to %s... (%d/%d)\n", wifi_ssid, retry_count + 1, MAX_WIFI_RETRIES);
         
-        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 
+        if (cyw43_arch_wifi_connect_timeout_ms(wifi_ssid, wifi_pwd, 
             CYW43_AUTH_WPA2_AES_PSK, WIFI_CONNECT_TIMEOUT_MS) == 0) {
             printf("Wi-Fi connected successfully.\n");
             return true;
