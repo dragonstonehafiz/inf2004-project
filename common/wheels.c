@@ -22,7 +22,7 @@ void init_wheels()
     set_car_state(CAR_STATIONARY);
     set_wheels_duty_cycle(0.f);
 
-    add_repeating_timer_ms(100, pid_timer_callback, NULL, &pid_timer);
+    add_repeating_timer_ms(50, pid_timer_callback, NULL, &pid_timer);
 }
 void set_car_state(uint8_t nextState)
 {

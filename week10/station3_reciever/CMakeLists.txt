@@ -3,10 +3,7 @@ add_executable(
     week10_station3_reciever.c
     )
     
-target_compile_definitions(week10_station3_reciever PRIVATE
-    WIFI_SSID=\"${WIFI_SSID}\"
-    WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
-    )
+target_compile_definitions(week10_station3_reciever PRIVATE)
 
 target_include_directories(week10_station3_reciever PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}

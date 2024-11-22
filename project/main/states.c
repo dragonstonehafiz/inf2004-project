@@ -1,5 +1,6 @@
 #include "states.h"
 #include "reciever.h"
+#include "wheels.h"
 
 uint8_t currState;
 extern bool running;
@@ -41,7 +42,8 @@ void updateCore0()
             break;
         case STATE_REMOTE:
             movementData = get_movement_data();
-            print_movement_data(movementData);
+            handleControls(movementData);
+            printf("leftDutyCycle: %.2f, rightDutyCycle: %.2f\n", pid_left.duty_cycle, pid_right.duty_cycle);
             break;
         case STATE_AUTO:
             break;
@@ -78,6 +80,51 @@ void handleControls(movement_data_t *movementData)
         return;
     else
     {
-        
+        // ははは この授業は凄く楽しいです
+        // 皮肉じゃないよ
+        // Handle forward direction
+        if (movementData->forward_direction == 'F')
+        {
+            set_car_state(CAR_FORWARD);
+            
+            // If we are moving forward and turning right,
+            // left wheel should be slower than right wheel
+            // 実はさ、僕の部屋は狭すぎてコードをテストするのは難しい
+            if (movementData->turn_direction == 'R')
+            {
+                float *leftDutyCycle = &movementData->forward_percentage;
+                set_left_wheel_duty_cycle(*leftDutyCycle);
+                float rightDutyCycle = (*leftDutyCycle * (1 - movementData->turn_percentage));
+                set_right_wheel_duty_cycle(rightDutyCycle);
+            }
+            // If turn left, right wheel should be slower than right
+            else if (movementData->turn_direction == 'L')
+            {
+                float *rightDutyCycle = &movementData->forward_percentage;
+                set_right_wheel_duty_cycle(*rightDutyCycle);
+                float leftDutyCycle = (*rightDutyCycle * (1 - movementData->turn_percentage));
+                set_left_wheel_duty_cycle(leftDutyCycle);
+            }
+            // If moving forward, just make right wheel match left wheel pid
+            else 
+            {
+                float *leftDutyCycle = &movementData->forward_percentage;
+                set_left_wheel_duty_cycle(*leftDutyCycle);
+                pid_right.enabled = true;
+            }
+        }
+        // For backward movement, turning not handled
+        else if (movementData->forward_direction == 'B')
+        {
+            set_car_state(CAR_BACKWARD);
+            float *leftDutyCycle = &movementData->forward_percentage;
+            set_left_wheel_duty_cycle(*leftDutyCycle);
+            pid_right.enabled = true;
+        }
+        else
+        {
+            pid_right.enabled = false;
+            set_car_state(CAR_STATIONARY);
+        }
     }
 }

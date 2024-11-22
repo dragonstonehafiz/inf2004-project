@@ -4,8 +4,8 @@ add_executable(
     )
 
 target_compile_definitions(week10_station3_controller PRIVATE
-    WIFI_SSID=\"${WIFI_SSID}\"
-    WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+    WIFI_SSID=\"SINGTEL-WWY2\"
+    WIFI_PASSWORD=\"fefkxa7v34\"
     )
     
 target_include_directories(week10_station3_controller PRIVATE

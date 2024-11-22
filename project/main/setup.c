@@ -36,6 +36,8 @@ void irq_handler(uint gpio, uint32_t events)
     else if (gpio == WHEEL_ENCODER_LEFT_PIN)
     {
         encoderCallback(gpio, events);
+        if (pid_right.enabled)
+            pid_right.target_speed = pid_left.current_speed;
     }
 
 }
