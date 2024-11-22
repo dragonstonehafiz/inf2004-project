@@ -8,8 +8,10 @@ int main() {
     bool is_running = false;  // Flag to track if we're sending data
     bool prev_button_state = true;  // true because of pull-up (not pressed)
 
+
     stdio_init_all();
    
+    sleep_ms(3000);  // Delay to allow serial to be opened
     // Initialize accelerometer
     init_accelerometer();
     printf("Accelerometer initialized\n");

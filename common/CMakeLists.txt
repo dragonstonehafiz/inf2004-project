@@ -12,6 +12,7 @@ add_library(common_lib
         ultrasonic.h
         wheels.h
         wheels.c
+        pins.h
         )
 
 # pull in common dependencies
@@ -19,7 +20,6 @@ target_link_libraries(
     common_lib
     pico_stdlib 
     hardware_pwm
-    m
     )
 
 target_include_directories(common_lib PUBLIC ${CMAKE_CURRENT_LIST_DIR})
