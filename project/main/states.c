@@ -28,6 +28,8 @@ void changeState(uint8_t nextState)
 }
 void updateCore0()
 {
+    movement_data_t * movementData = NULL; 
+
     switch (currState)
     {
         case STATE_INITIAL:
@@ -36,6 +38,8 @@ void updateCore0()
             connect_to_wifi();
             break;
         case STATE_REMOTE:
+            movementData = get_movement_data();
+            print_movement_data(movementData);
             break;
         case STATE_AUTO:
             break;

@@ -10,6 +10,7 @@ typedef struct {
 } movement_data_t;
 
 movement_data_t *get_movement_data(void);
+void print_movement_data(movement_data_t * movement_data);
 
 int init_server();
 int deinit_server();

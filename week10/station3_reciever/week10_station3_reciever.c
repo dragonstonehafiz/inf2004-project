@@ -99,7 +99,7 @@ int main() {
     while (retry_count < MAX_WIFI_RETRIES) {
         printf("Attempting to connect to WiFi... (%d/%d)\n", retry_count + 1, MAX_WIFI_RETRIES);
         
-        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 
+        if (cyw43_arch_wifi_connect_timeout_ms("bighowdy", "yeedyourlasthaw", 
             CYW43_AUTH_WPA2_AES_PSK, WIFI_CONNECT_TIMEOUT_MS) == 0) {
             printf("WiFi connected successfully!\n");
             printf("IP Address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
