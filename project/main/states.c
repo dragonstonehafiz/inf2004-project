@@ -4,6 +4,8 @@
 uint8_t currState;
 extern bool running;
 
+void handleControls(movement_data_t *movementData);
+
 void changeState(uint8_t nextState)
 {
     currState = nextState;
@@ -50,7 +52,6 @@ void updateCore0()
             break;
     }
 }
-
 void updateCore1()
 {
     switch (currState)
@@ -68,5 +69,15 @@ void updateCore1()
         default:
             printf("ヤバイ\n");
             break;
+    }
+}
+
+void handleControls(movement_data_t *movementData)
+{
+    if (movementData == NULL)
+        return;
+    else
+    {
+        
     }
 }

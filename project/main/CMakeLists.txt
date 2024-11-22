@@ -8,8 +8,8 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         )
 
     target_compile_definitions(main_car PRIVATE
-        WIFI_SSID=\"bighowdy\"
-        WIFI_PASSWORD=\"yeedyourlasthaw\"
+            WIFI_SSID=\"${WIFI_SSID}\"
+            WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
         )
         
     target_include_directories(

@@ -13,6 +13,9 @@ static movement_data_t movement_data = {"unknown", 'N', 0.0f, 'N', 0.0f};
 // Global variable to see if new data received
 static bool new_data_received = false;
 
+char wifi_ssid[] = "SINGTEL-WWY2";
+char wifi_pwd[] = "fefkxa7v34";
+
 // Putting declarations here so outside classes don't see things they shouldn't use
 void init_udp_server();
 void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
@@ -63,9 +66,9 @@ int connect_to_wifi()
     bool success = false;
     while (retry_count < MAX_WIFI_RETRIES) 
     {
-        printf("\nAttempting to connect to %s (%d/%d)\n", WIFI_SSID, retry_count + 1, MAX_WIFI_RETRIES);
+        printf("\nAttempting to connect to %s (%d/%d)\n", wifi_ssid, retry_count + 1, MAX_WIFI_RETRIES);
         
-        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 
+        if (cyw43_arch_wifi_connect_timeout_ms(wifi_ssid, wifi_pwd, 
             CYW43_AUTH_WPA2_AES_PSK, WIFI_CONNECT_TIMEOUT_MS) == 0) {
             printf("WiFi connected successfully!\n");
             printf("IP Address: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
@@ -115,12 +118,6 @@ void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const 
                 movement_data.turn_percentage = t_perc;
 
                 new_data_received = true;
-                
-                printf("Device: %s, Movement: %c (%.1f%%), Turn: %c (%.1f%%)\n",
-                       movement_data.device_name, movement_data.forward_direction, 
-                       movement_data.forward_percentage,
-                       movement_data.turn_direction, 
-                       movement_data.turn_percentage);
             } else {
                 printf("Failed to parse movement data\n");
             }
