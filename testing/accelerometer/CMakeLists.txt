@@ -4,7 +4,13 @@ add_executable(
         )
 
 # pull in common dependencies and additional i2c hardware support
-target_link_libraries(TEST_ACCELEROMETER pico_stdlib hardware_i2c)
+target_link_libraries(
+        TEST_ACCELEROMETER 
+        pico_stdlib 
+        hardware_i2c
+        common_lib
+        pico_cyw43_arch_lwip_threadsafe_background
+        )
 
 target_include_directories(TEST_ACCELEROMETER PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}
