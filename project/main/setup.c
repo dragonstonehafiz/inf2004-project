@@ -5,7 +5,9 @@
 #include "ultrasonic.h"
 #include "wheels.h"
 
-extern uint8_t currState; 
+#define BUTTON_21 21
+
+extern uint8_t currState;
 
 void init_gpio()
 {
@@ -16,13 +18,13 @@ void init_gpio()
 }
 void init_interrupts()
 {
-    gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
+    gpio_set_irq_enabled_with_callback(BUTTON_21, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
     gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_RIGHT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
     gpio_set_irq_enabled_with_callback(WHEEL_ENCODER_LEFT_PIN, GPIO_IRQ_EDGE_FALL, true, &irq_handler);
 }
 void irq_handler(uint gpio, uint32_t events)
 {
-    if (gpio == 21)
+    if (gpio == BUTTON_21)
     {
         if (currState == STATE_INITIAL)
             changeState(STATE_CONNECTING);

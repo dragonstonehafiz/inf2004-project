@@ -2,7 +2,7 @@
 #include "reciever.h"
 
 uint8_t currState;
-extern uint8_t running;
+extern bool running;
 
 void changeState(uint8_t nextState)
 {
@@ -12,7 +12,6 @@ void changeState(uint8_t nextState)
         case STATE_INITIAL:
             break;
         case STATE_CONNECTING:
-            init_server();
             break;
         case STATE_REMOTE:
             break;
@@ -20,7 +19,7 @@ void changeState(uint8_t nextState)
             break;
         case STATE_END:
             deinit_server();
-            running = 0;
+            running = false;
             break;
         default:
             printf("ヤバイ\n");

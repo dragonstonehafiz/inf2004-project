@@ -2,17 +2,20 @@
 
 #include "states.h"
 #include "setup.h"
+#include "reciever.h"
 
-uint8_t running = 1;
+bool running = true;
 
 int main() 
 {
     init_gpio();
     init_interrupts();
+    init_server();
     changeState(STATE_INITIAL);
 
-    while (running == 1)
+    while (true)
         updateCore0();
 
+    deinit_server();
     return 0;
 }
