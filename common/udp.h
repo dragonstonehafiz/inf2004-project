@@ -14,7 +14,7 @@
 #define BEACON_TARGET "192.168.1.115"
 #define BEACON_INTERVAL_MS 10
 #define WIFI_CONNECT_TIMEOUT_MS 10000
-#define MAX_WIFI_RETRIES 3
+#define MAX_WIFI_RETRIES 25
 
 // Global variable for UDP PCB
 static struct udp_pcb* udp_pcb = NULL;

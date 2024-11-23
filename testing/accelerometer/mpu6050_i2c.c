@@ -19,24 +19,44 @@ int main()
 #else
     printf("Hello, LSM303DLHC! Reading raw and adjusted data from registers...\n");
 
-    float pitch, roll, yaw;
-
     // Main loop
     while (1) 
     {
-        // Calculate the angles based on accelerometer and magnetometer data
+        static float prev_forward_percentage = 0.0f;  // Changed from prev_forward_speed
+        static float prev_turn_speed = 0.0f;
+        static char prev_forward_dir = 'N';
+        static char prev_turn_dir = 'N';
+
+        // Initialize movement_data_t
+        movement_data_t movement_data = {'N', 0.0f, 'N', 0.0f};
+
+        float pitch, roll, yaw;
+        char* data_to_send;
+
+        // Read accelerometer data
         calculate_angles(&pitch, &roll, &yaw);
         
-        bool moveFront, turnRight;
-        float scalarFront, scalarRight;
+        // Process movement commands
+        movement_data = get_command(pitch, roll, movement_data);
 
-        get_command_forward(pitch, &moveFront, &turnRight);
-        get_command_turn(roll, &turnRight, &scalarRight);
+        // Check if current data is different from previous data
+        if (movement_data.forward_direction != prev_forward_dir ||
+            movement_data.forward_percentage != prev_forward_percentage ||  // Changed from prev_forward_speed
+            movement_data.turn_direction != prev_turn_dir ||
+            movement_data.turn_percentage != prev_turn_speed) {
+            
+            // Data has changed, send it
+            data_to_send = serialize_movement_data(&movement_data);
+            // printf("%s", data_to_send);
 
-        // Print raw pitch and roll values
-        // printf("Raw Pitch = %.2f°, Raw Roll = %.2f°\n", pitch * 180.0 / M_PI, roll * 180.0 / M_PI);
+            // Update previous values
+            prev_forward_dir = movement_data.forward_direction;
+            prev_forward_percentage = movement_data.forward_percentage;  // Changed from prev_forward_speed
+            prev_turn_dir = movement_data.turn_direction;
+            prev_turn_speed = movement_data.turn_percentage;
+        }
 
-        sleep_ms(500);  // Shorter delay for more responsiveness
+        sleep_ms(100);  // Shorter delay for more responsiveness
     }
 #endif
 }

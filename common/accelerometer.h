@@ -16,7 +16,6 @@
 #define LSM303_REG_MAG_CRA_REG_M 0x00     // Control register A for magnetometer
 #define LSM303_REG_MAG_OUT_X_H_M 0x03     // Output register for magnetometer X-axis MSB
 
-
 #define MAX_DATA_STRING 32
 
 // Scale factors
@@ -24,9 +23,10 @@
 #define MAG_SCALE (1.0 / 1100.0)  // Magnetometer scale for ±1.3 gauss range (1100 LSB/gauss)
 
 // Thresholds for movements
-#define FORWARD_BACKWARD_THRESHOLD (15.0/180.0 * M_PI)  // Threshold for forward/backward movement
-#define TURN_THRESHOLD (15.0/180.0 * M_PI)               // Threshold for turning
-#define MAX_SPEED 100                    // Max speed percentage
+#define THRESHOLD_DEG 10.0
+#define THRESHOLD_RAD (THRESHOLD_DEG/180.0 * M_PI)  // Threshold for movement
+#define MAX_ANGLE_RAD (70.0 / 180.0 * M_PI)
+#define RAD_TO_DEG 180.0/M_PI
 
 
 typedef struct {
@@ -161,73 +161,76 @@ void calculate_angles(float* pitch, float* roll, float* yaw)
 
 float convert_to_discrete_percentage(float input_percentage) 
 {
-    if (input_percentage <= 15.0f) {
+    if (input_percentage > 1.f)
+        input_percentage = 1.f;
+    int levels = ceil(MAX_ANGLE_RAD / THRESHOLD_RAD);
+    float step = 1.0f / levels;
+    float currLevel = (input_percentage * levels);
+    // printf("levels: %d, inputPercent: %.2f, currLevel: %d\n", levels, input_percentage, (int)round(currLevel));
+    if (input_percentage < step)
         return 0.0f;
-    }
-    else if (input_percentage > 15.0f && input_percentage <= 30.0f) {
-        return 0.2f;
-    }
-    else if (input_percentage > 30.0f && input_percentage <= 45.0f) {
-        return 0.4f;
-    }
-    else if (input_percentage > 45.0f && input_percentage <= 60.0f) {
-        return 0.6f;
-    }
-    else if (input_percentage > 60.0f && input_percentage <= 75.0f) {
-        return 0.8f;
-    }
-    else if (input_percentage > 75.0f) {
+    else if (input_percentage > 1.0f - step)
         return 1.0f;
-    }
-    return 1.0f;
+    else
+        return (int)round(currLevel) * step;
+    // if (input_percentage <= THRESHOLD_DEG) {
+    //     return 0.0f;
+    // }
+    // else if (input_percentage > 15.0f && input_percentage <= 30.0f) {
+    //     return 0.2f;
+    // }
+    // else if (input_percentage > 30.0f && input_percentage <= 45.0f) {
+    //     return 0.4f;
+    // }
+    // else if (input_percentage > 45.0f && input_percentage <= 60.0f) {
+    //     return 0.6f;
+    // }
+    // else if (input_percentage > 60.0f && input_percentage <= 75.0f) {
+    //     return 0.8f;
+    // }
+    // else if (input_percentage > 75.0f) {
+    //     return 1.0f;
+    // }
+    // return 1.0f;
 }
 
 // Get forward and turn command at once
 movement_data_t get_command(float pitch, float roll, movement_data_t movement) 
 {
-    // Check if within ±30 degrees threshold
-    if (pitch <= FORWARD_BACKWARD_THRESHOLD && pitch >= -FORWARD_BACKWARD_THRESHOLD) 
+    if (pitch <= THRESHOLD_RAD && pitch >= -THRESHOLD_RAD) 
     {
         // Within threshold - set to stop
         movement.forward_direction = 'N';
         movement.forward_percentage = 0.0f;  // Changed from speed_percentage
     }
-    else if (pitch > FORWARD_BACKWARD_THRESHOLD) 
+    else if (pitch > THRESHOLD_RAD) 
     {
         // Moving forward
         movement.forward_direction = 'F';
-        movement.forward_percentage = convert_to_discrete_percentage((pitch / M_PI_2) * MAX_SPEED);
-        if (movement.forward_percentage > MAX_SPEED) 
-            movement.forward_percentage = MAX_SPEED;
+        movement.forward_percentage = convert_to_discrete_percentage(pitch / MAX_ANGLE_RAD);
     }
-    else if (pitch < -FORWARD_BACKWARD_THRESHOLD) 
+    else if (pitch < -THRESHOLD_RAD) 
     {
         // Moving backward
         movement.forward_direction = 'B';
-        movement.forward_percentage = convert_to_discrete_percentage((-pitch / M_PI_2) * MAX_SPEED);
-        if (movement.forward_percentage > MAX_SPEED) 
-            movement.forward_percentage = MAX_SPEED;
+        movement.forward_percentage = convert_to_discrete_percentage(-pitch / MAX_ANGLE_RAD);
     }
 
     // Turn commands remain unchanged
-    if (roll <= TURN_THRESHOLD && roll >= -TURN_THRESHOLD) 
+    if (roll <= THRESHOLD_RAD && roll >= -THRESHOLD_RAD) 
     {
         movement.turn_direction = 'N';
         movement.turn_percentage = 0.0f;
     }
-    else if (roll > TURN_THRESHOLD) 
-    {
-        movement.turn_direction = 'R';
-        movement.turn_percentage = convert_to_discrete_percentage((roll / M_PI_2) * MAX_SPEED);
-        if (movement.turn_percentage > MAX_SPEED) 
-            movement.turn_percentage = MAX_SPEED;
-    }
-    else if (roll < -TURN_THRESHOLD) 
+    else if (roll > THRESHOLD_RAD) 
     {
         movement.turn_direction = 'L';
-        movement.turn_percentage = convert_to_discrete_percentage((-roll / M_PI_2) * MAX_SPEED);
-        if (movement.turn_percentage > MAX_SPEED) 
-            movement.turn_percentage = MAX_SPEED;
+        movement.turn_percentage = convert_to_discrete_percentage(roll / MAX_ANGLE_RAD);
+    }
+    else if (roll < -THRESHOLD_RAD) 
+    {
+        movement.turn_direction = 'R';
+        movement.turn_percentage = convert_to_discrete_percentage(-roll / MAX_ANGLE_RAD);
     }
 
     return movement;
