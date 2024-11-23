@@ -15,4 +15,7 @@
 #define TRIG_PIN 4
 #define ECHO_PIN 5
 
+#define WIFI_INDICATOR_PIN_1 14
+#define WIFI_INDICATOR_PIN_2 15
+
 #endif

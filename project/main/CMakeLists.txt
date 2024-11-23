@@ -20,7 +20,8 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
 
     target_link_libraries(main_car
         common_lib
-        pico_stdlib 
+        pico_stdlib
+        pico_multicore
         hardware_adc
         pico_cyw43_arch_lwip_threadsafe_background
         )

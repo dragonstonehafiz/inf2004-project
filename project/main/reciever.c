@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "states.h"
+#include "pins.h"
 
 #define UDP_PORT 4444
 #define MAX_WIFI_RETRIES 3
@@ -42,6 +43,11 @@ void print_movement_data(movement_data_t * movement_data)
 
 int init_server()
 {
+    gpio_init(WIFI_INDICATOR_PIN_1);
+    gpio_set_dir(WIFI_INDICATOR_PIN_1, GPIO_OUT);
+    gpio_init(WIFI_INDICATOR_PIN_2);
+    gpio_set_dir(WIFI_INDICATOR_PIN_2, GPIO_OUT);
+
     // Initialize WiFi
     if (cyw43_arch_init()) 
     {
@@ -64,8 +70,11 @@ int connect_to_wifi()
     // Connect to WiFi
     int retry_count = 0;
     bool success = false;
-    while (retry_count < MAX_WIFI_RETRIES) 
+    while (retry_count < MAX_WIFI_RETRIES)
     {
+        // Enable first indicator pin to show connection is being attempted
+        gpio_put(WIFI_INDICATOR_PIN_1, 1);
+
         printf("\nAttempting to connect to %s (%d/%d)\n", wifi_ssid, retry_count + 1, MAX_WIFI_RETRIES);
         
         if (cyw43_arch_wifi_connect_timeout_ms(wifi_ssid, wifi_pwd, 
@@ -77,17 +86,24 @@ int connect_to_wifi()
             init_udp_server();
             changeState(STATE_REMOTE);
             success = true;
+            // Enable second indicator pin to show connection is successfull
+            gpio_put(WIFI_INDICATOR_PIN_2, 1);
             break;
         }
         
         printf("WiFi connection attempt %d failed.\n", retry_count + 1);
         retry_count++;
+        // Disable first indicator pin to show connection failed, then wait 1 second
+        gpio_put(WIFI_INDICATOR_PIN_1, 0);
         sleep_ms(1000);
     }
 
     if (!success)
     {
         printf("Connection failed. Press button 21 to try again.\n");
+        // Disable both wifi leds if failed
+        gpio_put(WIFI_INDICATOR_PIN_1, 0);
+        gpio_put(WIFI_INDICATOR_PIN_2, 0);
         changeState(STATE_INITIAL);
     }
     return 1;

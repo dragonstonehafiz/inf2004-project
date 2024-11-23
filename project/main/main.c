@@ -1,10 +1,10 @@
+#include "pico/multicore.h"
 #include <string.h>
 
 #include "states.h"
 #include "setup.h"
 #include "reciever.h"
 
-bool running = true;
 
 int main() 
 {
@@ -13,8 +13,8 @@ int main()
     init_server();
     changeState(STATE_INITIAL);
 
-    while (true)
-        updateCore0();
+    multicore_launch_core1(updateCore1);
+    updateCore0();
 
     deinit_server();
     return 0;

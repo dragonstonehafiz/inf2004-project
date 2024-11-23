@@ -1,11 +1,34 @@
 #include "states.h"
 #include "reciever.h"
 #include "wheels.h"
+#include "ultrasonic.h"
 
 uint8_t currState;
-extern bool running;
+// set to true if ultrasonic sees something that is <10cm
+bool tooClose = false;
+uint64_t ultrasonicLastCheckTime;
 
 void handleControls(movement_data_t *movementData);
+void handleUltrasonic()
+{
+    uint64_t currentTime = time_us_64();
+    uint64_t timeDiff = currentTime - ultrasonicLastCheckTime;
+
+    // timediff larger than 100ms
+    if (timeDiff > 100000)
+    {
+        triggerPulse();
+        sleep_ms(30);
+
+        float calculatedDist = getCm();
+        if (calculatedDist <= 15.f && calculatedDist >= 0.f)
+            tooClose = true;
+        else
+            tooClose = false;
+        
+        ultrasonicLastCheckTime = currentTime;
+    }
+}
 
 void changeState(uint8_t nextState)
 {
@@ -22,7 +45,6 @@ void changeState(uint8_t nextState)
             break;
         case STATE_END:
             deinit_server();
-            running = false;
             break;
         default:
             printf("ヤバイ\n");
@@ -31,46 +53,53 @@ void changeState(uint8_t nextState)
 }
 void updateCore0()
 {
-    movement_data_t * movementData = NULL; 
-
-    switch (currState)
+    while (true)
     {
-        case STATE_INITIAL:
-            break;
-        case STATE_CONNECTING:
-            connect_to_wifi();
-            break;
-        case STATE_REMOTE:
-            movementData = get_movement_data();
-            handleControls(movementData);
-            printf("leftDutyCycle: %.2f, rightDutyCycle: %.2f\n", pid_left.duty_cycle, pid_right.duty_cycle);
-            break;
-        case STATE_AUTO:
-            break;
-        case STATE_END:
-            break;
-        default:
-            printf("ヤバイ\n");
-            break;
+        movement_data_t * movementData = NULL; 
+
+        switch (currState)
+        {
+            case STATE_INITIAL:
+                break;
+            case STATE_CONNECTING:
+                connect_to_wifi();
+                break;
+            case STATE_REMOTE:
+                movementData = get_movement_data();
+                handleControls(movementData);
+                break;
+            case STATE_AUTO:
+                break;
+            case STATE_END:
+                break;
+            default:
+                printf("ヤバイ\n");
+                break;
+        }
     }
 }
 void updateCore1()
 {
-    switch (currState)
+    while (true)
     {
-        case STATE_INITIAL:
-            break;
-        case STATE_CONNECTING:
-            break;
-        case STATE_REMOTE:
-            break;
-        case STATE_AUTO:
-            break;
-        case STATE_END:
-            break;
-        default:
-            printf("ヤバイ\n");
-            break;
+        switch (currState)
+        {
+            case STATE_INITIAL:
+                break;
+            case STATE_CONNECTING:
+                break;
+            case STATE_REMOTE:
+                handleUltrasonic();
+                break;
+            case STATE_AUTO:
+                handleUltrasonic();
+                break;
+            case STATE_END:
+                break;
+            default:
+                printf("ヤバイ\n");
+                break;
+        }
     }
 }
 
@@ -78,53 +107,41 @@ void handleControls(movement_data_t *movementData)
 {
     if (movementData == NULL)
         return;
+    else if (tooClose)
+    {
+        set_car_state(CAR_STATIONARY);
+        reset_pid();
+    }
     else
     {
         // ははは この授業は凄く楽しいです
         // 皮肉じゃないよ
-        // Handle forward direction
+        // You can only move forward/backward or turn.
+        // You cannot turn while going forward/backward. Why? Because I give up, that's why.
         if (movementData->forward_direction == 'F')
         {
             set_car_state(CAR_FORWARD);
-            
-            // If we are moving forward and turning right,
-            // left wheel should be slower than right wheel
-            // 実はさ、僕の部屋は狭すぎてコードをテストするのは難しい
-            if (movementData->turn_direction == 'R')
-            {
-                float *leftDutyCycle = &movementData->forward_percentage;
-                set_left_wheel_duty_cycle(*leftDutyCycle);
-                float rightDutyCycle = (*leftDutyCycle * (1 - movementData->turn_percentage));
-                set_right_wheel_duty_cycle(rightDutyCycle);
-            }
-            // If turn left, right wheel should be slower than right
-            else if (movementData->turn_direction == 'L')
-            {
-                float *rightDutyCycle = &movementData->forward_percentage;
-                set_right_wheel_duty_cycle(*rightDutyCycle);
-                float leftDutyCycle = (*rightDutyCycle * (1 - movementData->turn_percentage));
-                set_left_wheel_duty_cycle(leftDutyCycle);
-            }
-            // If moving forward, just make right wheel match left wheel pid
-            else 
-            {
-                float *leftDutyCycle = &movementData->forward_percentage;
-                set_left_wheel_duty_cycle(*leftDutyCycle);
-                pid_right.enabled = true;
-            }
+            set_left_wheel_duty_cycle(movementData->forward_percentage);
+            pid_right.enabled = true;
         }
-        // For backward movement, turning not handled
         else if (movementData->forward_direction == 'B')
         {
             set_car_state(CAR_BACKWARD);
-            float *leftDutyCycle = &movementData->forward_percentage;
-            set_left_wheel_duty_cycle(*leftDutyCycle);
+            set_left_wheel_duty_cycle(movementData->forward_percentage);
             pid_right.enabled = true;
         }
         else
         {
+            // We won't need pid when turning
             pid_right.enabled = false;
-            set_car_state(CAR_STATIONARY);
+            reset_pid();
+            set_wheels_duty_cycle(movementData->forward_percentage);
+            if (movementData->turn_direction == 'R')
+                set_car_state(CAR_TURN_RIGHT);
+            else if (movementData->turn_direction == 'L')
+                set_car_state(CAR_TURN_LEFT);
+            else
+                set_car_state(CAR_STATIONARY);
         }
     }
 }
