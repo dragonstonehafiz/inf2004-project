@@ -3,7 +3,7 @@
 
 #include "pico/stdlib.h"
 
-extern uint8_t currState;
+extern volatile uint8_t currState;
 
 enum STATES_FINAL
 {

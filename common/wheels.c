@@ -6,10 +6,12 @@
 #include <math.h>
 
 #define MAX_STEP 0.1
+#define PID_TIME_MS 100
+#define PID_TIME_S (PID_TIME_MS / 100)
 
 // Variables for controling pid speed
-PID_VAR pid_left = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false, .enabled = false, .last_time=0};
-PID_VAR pid_right = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false, .enabled = false, .last_time=0};
+PID_VAR pid_left = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false, .enabled = false};
+PID_VAR pid_right = {.current_speed = 0.f, .target_speed = 0.f, .duty_cycle = 0.f, .integral = 0.f, .prev_error = 0.f, .turning = false, .enabled = false};
 
 // Timer used to update pid
 struct repeating_timer pid_timer;
@@ -22,7 +24,7 @@ void init_wheels()
     set_car_state(CAR_STATIONARY);
     set_wheels_duty_cycle(0.f);
 
-    add_repeating_timer_ms(50, pid_timer_callback, NULL, &pid_timer);
+    add_repeating_timer_ms(PID_TIME_MS, pid_timer_callback, NULL, &pid_timer);
 }
 void set_car_state(uint8_t nextState)
 {
@@ -110,16 +112,14 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
     pid->integral += error;
     float derivative = error - pid->prev_error;
     // online formulas have delta time
-    uint64_t now = time_us_64();
-    float dt = (now - pid->last_time) / 1e6;
     // float Kp = 0.1, Ki = 0.01, Kd = 0.005;
-    float step = (1.f * error + 0.007 * (pid->integral) + 0.005 * derivative) * dt;
+    float step = (1.f * error + 0.01 * (pid->integral) + 0.005 * derivative) * PID_TIME_S;
     // This function is ideally being called 10 times a second, so we don't want to make the step too big
     if (step > MAX_STEP)
         step = MAX_STEP;
     else if (step < -MAX_STEP)
         step = -MAX_STEP;
-    // printf("step: %0.2f, dt:%0.2f\n", step, dt);
+    // もうわけわかんない　諦める
     pid->duty_cycle += step;
 
     // Clamp the duty cycle to the range [0, 1]
@@ -129,7 +129,6 @@ void compute_wheel_duty_cycle(PID_VAR * pid)
         pid->duty_cycle = 0.1;
 
     pid->prev_error = error;
-    pid->last_time = now;
 }
 bool pid_timer_callback(struct repeating_timer *t)
 {
@@ -153,12 +152,10 @@ void reset_pid()
     pid_left.duty_cycle = 0.f;
     pid_left.integral = 0.f;
     pid_left.prev_error = 0.f;
-    pid_left.last_time = time_us_64();
 
     pid_right.current_speed = 0.f;
     pid_right.target_speed = 0.f;
     pid_right.duty_cycle = 0.f;
     pid_right.integral = 0.f;
     pid_right.prev_error = 0.f;
-    pid_right.last_time = pid_left.last_time;
 }

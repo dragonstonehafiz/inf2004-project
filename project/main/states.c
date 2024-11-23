@@ -3,10 +3,10 @@
 #include "wheels.h"
 #include "ultrasonic.h"
 
-uint8_t currState;
+volatile uint8_t currState;
 // set to true if ultrasonic sees something that is <10cm
-bool tooClose = false;
-uint64_t ultrasonicLastCheckTime;
+volatile bool tooClose = false;
+volatile uint64_t ultrasonicLastCheckTime;
 
 void handleControls(movement_data_t *movementData);
 void handleUltrasonic()
@@ -18,10 +18,12 @@ void handleUltrasonic()
     if (timeDiff > 100000)
     {
         triggerPulse();
+
         sleep_ms(30);
 
         float calculatedDist = getCm();
-        if (calculatedDist <= 15.f && calculatedDist >= 0.f)
+        // printf("calculatedDist: %.2f\n", calculatedDist);
+        if (calculatedDist <= 25.f && calculatedDist >= 0.f)
             tooClose = true;
         else
             tooClose = false;
@@ -66,6 +68,7 @@ void updateCore0()
                 break;
             case STATE_REMOTE:
                 movementData = get_movement_data();
+                handleUltrasonic();
                 handleControls(movementData);
                 break;
             case STATE_AUTO:
@@ -89,10 +92,8 @@ void updateCore1()
             case STATE_CONNECTING:
                 break;
             case STATE_REMOTE:
-                handleUltrasonic();
                 break;
             case STATE_AUTO:
-                handleUltrasonic();
                 break;
             case STATE_END:
                 break;
@@ -107,33 +108,34 @@ void handleControls(movement_data_t *movementData)
 {
     if (movementData == NULL)
         return;
-    else if (tooClose)
-    {
-        set_car_state(CAR_STATIONARY);
-        reset_pid();
-    }
     else
     {
+        // starting duty cycle not representative of duty cycle required to move
+        float minimumDutyCycle = 0.4f;
+        float remainder = 0.6f;
         // ははは この授業は凄く楽しいです
         // 皮肉じゃないよ
         // You can only move forward/backward or turn.
         // You cannot turn while going forward/backward. Why? Because I give up, that's why.
-        if (movementData->forward_direction == 'F')
+        if (movementData->forward_direction == 'F' && !tooClose)
         {
             set_car_state(CAR_FORWARD);
-            set_left_wheel_duty_cycle(movementData->forward_percentage);
+            float dutyCycle = minimumDutyCycle + remainder * movementData->forward_percentage;
+            set_wheels_duty_cycle(dutyCycle);
             pid_right.enabled = true;
         }
         else if (movementData->forward_direction == 'B')
         {
             set_car_state(CAR_BACKWARD);
-            set_left_wheel_duty_cycle(movementData->forward_percentage);
+            float dutyCycle = minimumDutyCycle + remainder * movementData->forward_percentage;
+            set_wheels_duty_cycle(dutyCycle);
             pid_right.enabled = true;
         }
         else
         {
             // We won't need pid when turning
             pid_right.enabled = false;
+            reset_pid();
             if (movementData->turn_direction == 'R')
                 set_car_state(CAR_TURN_RIGHT);
             else if (movementData->turn_direction == 'L')

@@ -24,7 +24,6 @@ typedef struct PID_VAR
     float prev_error;
     bool turning; // turning indicates if the wheel should be turning
     bool enabled; // enabled indicates if pid should set duty cycle 
-    uint64_t last_time;
 } PID_VAR;
 
 // Variables for controling pid speed
