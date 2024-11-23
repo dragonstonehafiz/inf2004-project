@@ -1,5 +1,6 @@
 #include "accelerometer.h"
 #include "udp.h"
+#include "pins.h"
 
 #define BUTTON_PIN 20  // Define the GPIO pin for the button
 

@@ -31,7 +31,6 @@ int main()
         movement_data_t movement_data = {'N', 0.0f, 'N', 0.0f};
 
         float pitch, roll, yaw;
-        char* data_to_send;
 
         // Read accelerometer data
         calculate_angles(&pitch, &roll, &yaw);
@@ -46,8 +45,8 @@ int main()
             movement_data.turn_percentage != prev_turn_speed) {
             
             // Data has changed, send it
-            data_to_send = serialize_movement_data(&movement_data);
-            // printf("%s", data_to_send);
+            char* data_to_send = serialize_movement_data(&movement_data);
+            printf("%s", data_to_send);
 
             // Update previous values
             prev_forward_dir = movement_data.forward_direction;

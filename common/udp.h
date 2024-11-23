@@ -7,6 +7,7 @@
 #include "pico/cyw43_arch.h"
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
+#include "pins.h"
 
 // Define constants
 #define UDP_PORT 4444
@@ -14,7 +15,7 @@
 #define BEACON_TARGET "192.168.1.115"
 #define BEACON_INTERVAL_MS 10
 #define WIFI_CONNECT_TIMEOUT_MS 10000
-#define MAX_WIFI_RETRIES 25
+#define MAX_WIFI_RETRIES 3
 
 // Global variable for UDP PCB
 static struct udp_pcb* udp_pcb = NULL;
@@ -76,6 +77,12 @@ void send_udp_data(const char* data) {
 }
 
 bool connect_to_wifi() {
+    
+    gpio_init(WIFI_INDICATOR_PIN_1);
+    gpio_set_dir(WIFI_INDICATOR_PIN_1, GPIO_OUT);
+    gpio_init(WIFI_INDICATOR_PIN_2);
+    gpio_set_dir(WIFI_INDICATOR_PIN_2, GPIO_OUT);
+
     printf("Connecting to Wi-Fi\n");
 
     // Initialize Wi-Fi
@@ -89,17 +96,24 @@ bool connect_to_wifi() {
 
     int retry_count = 0;
     while (retry_count < MAX_WIFI_RETRIES) {
+        // Enable first indicator pin to show connection is being attempted
+        gpio_put(WIFI_INDICATOR_PIN_1, 1);
         printf("Attempting to connect to %s... (%d/%d)\n", wifi_ssid, retry_count + 1, MAX_WIFI_RETRIES);
         
         if (cyw43_arch_wifi_connect_timeout_ms(wifi_ssid, wifi_pwd, 
             CYW43_AUTH_WPA2_AES_PSK, WIFI_CONNECT_TIMEOUT_MS) == 0) {
             printf("Wi-Fi connected successfully.\n");
+        
+            // Enable second indicator pin to show connection is successfull
+            gpio_put(WIFI_INDICATOR_PIN_2, 1);
             return true;
         }
         
         printf("Wi-Fi connection attempt %d failed.\n", retry_count + 1);
         retry_count++;
-        sleep_ms(10); // Wait before retrying
+        // Disable first indicator pin to show connection failed, then wait 1 second
+        gpio_put(WIFI_INDICATOR_PIN_1, 0);
+        sleep_ms(1000); // Wait before retrying
     }
 
     printf("Failed to connect to Wi-Fi after %d attempts.\n", MAX_WIFI_RETRIES);
