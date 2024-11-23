@@ -134,14 +134,13 @@ void handleControls(movement_data_t *movementData)
         {
             // We won't need pid when turning
             pid_right.enabled = false;
-            reset_pid();
-            set_wheels_duty_cycle(movementData->forward_percentage);
             if (movementData->turn_direction == 'R')
                 set_car_state(CAR_TURN_RIGHT);
             else if (movementData->turn_direction == 'L')
                 set_car_state(CAR_TURN_LEFT);
             else
                 set_car_state(CAR_STATIONARY);
+            set_wheels_duty_cycle(movementData->turn_percentage);
         }
     }
 }
