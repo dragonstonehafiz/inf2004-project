@@ -96,11 +96,16 @@ float getCm()
     float distance = (float)echo_duration / 29.0 / 2.0;
 
     // Apply calibration for close distances
-    if (distance > 4.7 && distance < 5.2) {
-        distance += 0.2;
-    }
-    else if (distance < 4.5) {
-        distance -= 0.1;
+    distance += 0.1; 
+
+    // Apply linear or polynomial calibration
+    if (distance > 9.3 && distance < 9.75) {
+       distance = distance * 0.98; 
+    } else if (distance < 5.7) {
+        distance -= 0.15;
+        distance = distance * 0.98 + 0.05; 
+    } else if (distance > 8.1 && distance < 9.1) {
+        distance += 0.3;
     }
 
     // Define minimum and maximum reliable distances in centimeters
