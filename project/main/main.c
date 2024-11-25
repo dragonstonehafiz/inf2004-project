@@ -3,8 +3,7 @@
 
 #include "states.h"
 #include "setup.h"
-#include "reciever.h"
-
+#include "network.h"
 
 int main() 
 {

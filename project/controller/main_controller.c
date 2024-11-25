@@ -1,5 +1,5 @@
+#include "network.h"
 #include "accelerometer.h"
-#include "udp.h"
 #include "pins.h"
 
 #define BUTTON_PIN 20  // Define the GPIO pin for the button
@@ -9,12 +9,12 @@ int main() {
     bool is_running = false;  // Flag to track if we're sending data
     bool prev_button_state = true;  // true because of pull-up (not pressed)
 
-
     stdio_init_all();
    
     sleep_ms(3000);  // Delay to allow serial to be opened
     // Initialize accelerometer
     init_accelerometer();
+    init_server();
     printf("Accelerometer initialized\n");
 
     // Initialize button GPIO with pull-up
@@ -26,7 +26,7 @@ int main() {
     connected = connect_to_wifi();
 
     if (connected){
-        if (initialize_udp() == NULL) {
+        if (init_udp_server_sender(IP_CAR) == NULL) {
             printf("UDP initialization failed\n");
             connected = false;
         } else {
@@ -57,10 +57,12 @@ int main() {
 
         // Only call get_data_to_send if is_running is true
         if (is_running) {
-            get_data_to_send();  // This function will handle both getting and sending data
+            char* toSend = get_data_to_send();  // This function will handle both getting and sending data
+            if (toSend != NULL)
+                send_udp_data(toSend, PORT_CAR, IP_CAR);
         }
         
-        sleep_ms(BEACON_INTERVAL_MS);
+        sleep_ms(100);
     }
 
     cyw43_arch_deinit();

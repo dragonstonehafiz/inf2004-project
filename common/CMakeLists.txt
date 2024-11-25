@@ -3,7 +3,7 @@ set(target common_lib)
 
 add_library(common_lib
         accelerometer.h
-        udp.h
+        accelerometer.c
         encoder.h
         encoder.c
         motor.h
@@ -13,6 +13,8 @@ add_library(common_lib
         wheels.h
         wheels.c
         pins.h
+        network.h
+        network.c
         )
 
 # pull in common dependencies
@@ -20,6 +22,7 @@ target_link_libraries(
     common_lib
     pico_stdlib 
     hardware_pwm
+    hardware_i2c
     pico_cyw43_arch_lwip_threadsafe_background
     )
 

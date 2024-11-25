@@ -3,7 +3,6 @@ if (EXISTS ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c)
         main_car
         main.c
         setup.c
-        reciever.c
         states.c
         )
 

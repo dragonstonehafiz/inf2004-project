@@ -1,7 +1,9 @@
 #include "states.h"
-#include "reciever.h"
 #include "wheels.h"
+#include "network.h"
 #include "ultrasonic.h"
+
+#define RECIEVER_UDP_PORT 4444
 
 volatile uint8_t currState;
 // set to true if ultrasonic sees something that is <10cm
@@ -43,7 +45,17 @@ void updateCore0()
             case STATE_INITIAL:
                 break;
             case STATE_CONNECTING:
-                connect_to_wifi_car();
+                if (connect_to_wifi())
+                {
+                    changeState(STATE_REMOTE);
+                    init_udp_server_reciever(RECIEVER_UDP_PORT);
+                    init_udp_server_sender(IP_DASHBOARD);
+                }
+                else 
+                {
+                    printf("Connection failed. Press button 21 to try again.\n");
+                    changeState(STATE_INITIAL);
+                }
                 break;
             case STATE_REMOTE:
                 movementData = get_movement_data();
@@ -64,22 +76,8 @@ void updateCore1()
 {
     while (true)
     {
-        switch (currState)
-        {
-            case STATE_INITIAL:
-                break;
-            case STATE_CONNECTING:
-                break;
-            case STATE_REMOTE:
-                break;
-            case STATE_AUTO:
-                break;
-            case STATE_END:
-                break;
-            default:
-                printf("ヤバイ\n");
-                break;
-        }
+        printf("here\n");
+        send_udp_data("hello", PORT_DASHBOARD, IP_DASHBOARD);
     }
 }
 

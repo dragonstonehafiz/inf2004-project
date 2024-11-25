@@ -14,9 +14,10 @@ target_include_directories(main_controller PRIVATE
         )
 
 target_link_libraries(main_controller 
-    pico_stdlib 
+    pico_stdlib
     hardware_i2c
     pico_cyw43_arch_lwip_threadsafe_background
+    common_lib
     )
 
 pico_add_extra_outputs(main_controller)
