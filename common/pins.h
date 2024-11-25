@@ -18,4 +18,7 @@
 #define WIFI_INDICATOR_PIN_1 14
 #define WIFI_INDICATOR_PIN_2 15
 
+#define PULSE_PIN_BARCODE 6 // Digital pin for pulse detection
+#define PIN_LINE_TRACING 17
+
 #endif

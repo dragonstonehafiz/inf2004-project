@@ -3,12 +3,24 @@
 
 #include "pico/stdlib.h"
 
-// Function declarations
-void init_gpio();
-void button_callback(uint gpio, uint32_t events);
-void init_pwm();
-void start_timer();
-int example_function(int a, int b);
-void main_fn();
+// For GPIO
+void initButton(uint gpio);
+void initLED(uint gpio);
+void init();
+// I'm reusing code from my car project
+void setupPWM(uint pwm_pin, float duty_cycle);
+void setPWMDutyCycle(uint pwm_pin, float duty_cycle);
+
+// Interrupts
+void irq_func(uint gpio, uint32_t events);
+
+// For Logic
+bool addChar(char toAdd);
+void setLED(uint gpio, char toPrint);
+void startPlayback();
+void mainloop();
+
+// Timer
+int64_t reeanbleButtons(alarm_id_t id, void *user_data);
 
 #endif

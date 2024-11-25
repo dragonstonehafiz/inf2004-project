@@ -69,16 +69,12 @@ void set_car_state(uint8_t nextState)
         set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
         pid_left.turning = true;
         pid_right.turning = true;
-        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.3f);
-        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.5f);
         break;
     case CAR_TURN_RIGHT_FORWARD:
         set_motor_direction(WHEEL_LEFT_OUT_PIN_1, WHEEL_LEFT_OUT_PIN_2, false);
         set_motor_direction(WHEEL_RIGHT_OUT_PIN_1, WHEEL_RIGHT_OUT_PIN_2, true);
         pid_left.turning = true;
         pid_right.turning = true;
-        set_motor_pwm_duty_cycle(WHEEL_LEFT_PWN_PIN, 0.5f);
-        set_motor_pwm_duty_cycle(WHEEL_RIGHT_PWN_PIN, 0.3f);
         break;
     default:
         break;
@@ -102,7 +98,7 @@ void set_right_wheel_duty_cycle(float dutyCycle)
     pid_right.duty_cycle = dutyCycle;
 }
 
-void compute_wheel_duty_cycle(PID_VAR * pid)
+void compute_wheel_duty_cycle(PID_VAR *pid)
 {
     float error = pid->target_speed - pid->current_speed;
     // Ideally both wheels should start at the same duty cycle so their speeds should be close

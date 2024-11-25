@@ -4,66 +4,181 @@
 #include "hardware/pwm.h"
 #include "functions.h"
 
-#define BUTTON_PIN 20
 #define LED_PIN 16
 #define LED_PIN2 17
 
-static struct repeating_timer timer;
+#define BTN_DOT 22
+#define BTN_DASH 21
+#define BTN_OUTPUT 20
 
-void main_fn() {
-    // Example of using a function with two inputs
-    int result = example_function(5, 10);
-    printf("Example function result: %d\n", result);
+#define PWM_WRAP 65535
+#define PWM_FREQ 300
+#define CLOCK_FREQ 125000000
+
+#define LOW_DUTY_CYCLE 0.1f
+
+uint led[] = {13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2};
+char state[] = {
+    ' ', ' ', 
+    ' ', ' ', 
+    ' ', ' ', 
+    ' ', ' ', 
+    ' ', ' ', 
+    ' ', ' ', 
+    ' ', ' '
+    };
+uint8_t currIndex = 0;
+uint8_t maxIndex = 11;
+uint8_t renderIndex = 0;
+bool playback = false;
+
+bool buttonRegister = true;
+
+void initButton(uint gpio)
+{
+    gpio_init(gpio);
+    gpio_set_dir(gpio, GPIO_IN);
+    gpio_pull_up(gpio);
+}
+void initLED(uint gpio)
+{
+    gpio_init(gpio);
+    gpio_set_dir(gpio, GPIO_OUT);
+
+    setupPWM(gpio, 0.f);
+}
+void init()
+{
+    // Buttons
+    initButton(BTN_DASH);
+    initButton(BTN_DOT);
+    initButton(BTN_OUTPUT);
+    gpio_set_irq_enabled_with_callback(BTN_DASH, GPIO_IRQ_EDGE_FALL, true, irq_func);
+    gpio_set_irq_enabled_with_callback(BTN_DOT, GPIO_IRQ_EDGE_FALL, true, irq_func);
+    gpio_set_irq_enabled_with_callback(BTN_OUTPUT, GPIO_IRQ_EDGE_FALL, true, irq_func);
+
+    // LEDs
+    for (int i = 0; i <= maxIndex; ++i)
+        initLED(led[i]);
 }
 
-// Timer callback function
-bool repeating_timer_callback(struct repeating_timer *t) {
-    static bool led_state = false;
-    gpio_put(LED_PIN2, led_state);  // Toggle LED
-    led_state = !led_state;  // Flip state for next toggle
+void setupPWM(uint pwm_pin, float duty_cycle) 
+{
+    // Calculate the PWM frequency and set the PWM wrap value
+    uint32_t divider = CLOCK_FREQ / (PWM_FREQ * PWM_WRAP);  // Compute divider for given frequency
 
-    printf("Timer triggered! LED is now %s\n", led_state ? "ON" : "OFF");
-    return true;  // Return true to keep the timer repeating
-}
+    // Set the GPIO function to PWM
+    gpio_set_function(pwm_pin, GPIO_FUNC_PWM);
 
-// Initialize GPIO (LED and button with interrupt)
-void init_gpio() {
-    // Initialize LED
-    gpio_init(LED_PIN2);
-    gpio_set_dir(LED_PIN2, GPIO_OUT);
+    // Find out which PWM slice is connected to the specified GPIO
+    uint slice_num = pwm_gpio_to_slice_num(pwm_pin);
+    pwm_set_clkdiv(slice_num, divider);
+    pwm_set_wrap(slice_num, PWM_WRAP);
+    pwm_set_gpio_level(pwm_pin, (uint16_t)(duty_cycle * (PWM_WRAP + 1)));
+    setPWMDutyCycle(pwm_pin, duty_cycle);
 
-    // Initialize Button with interrupt
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN);
-    gpio_set_irq_enabled_with_callback(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true, button_callback);
-}
-
-// Button interrupt callback
-void button_callback(uint gpio, uint32_t events) {
-    printf("Button on GP%d pressed!\n", gpio);
-}
-
-// Function to set up PWM on LED with a specific duty cycle
-void init_pwm() {
-    gpio_set_function(LED_PIN, GPIO_FUNC_PWM);
-    uint slice_num = pwm_gpio_to_slice_num(LED_PIN);
-
-    pwm_set_wrap(slice_num, 255);  // 8-bit resolution (0-255)
-    pwm_set_chan_level(slice_num, pwm_gpio_to_channel(LED_PIN), (50 * 255) / 100); // 50% duty cycle
     pwm_set_enabled(slice_num, true);
-
-    printf("PWM initialized on GPIO %d with 50%% duty cycle\n", LED_PIN);
+}
+void setPWMDutyCycle(uint pwm_pin, float duty_cycle) 
+{
+    pwm_set_gpio_level(pwm_pin, (uint16_t)((duty_cycle) * (PWM_WRAP - 1)));
 }
 
-// Set up and start a repeating timer that triggers every second (1000 ms)
-void start_timer() {
-    add_repeating_timer_ms(5000, repeating_timer_callback, NULL, &timer);
+void irq_func(uint gpio, uint32_t events)
+{
+    if (!buttonRegister)
+        return;
+
+    if (gpio == BTN_DASH)
+    {
+        if (!addChar('-'))
+            printf("Max Capacity Reached\n");
+        else
+            printf("Dash Added: [%d]\n", currIndex - 1);
+    }
+    else if (gpio == BTN_DOT)
+    {
+        if (!addChar('.'))
+            printf("Max Capacity Reached\n");
+        else
+            printf("Dot Added: [%d]\n", currIndex - 1);
+    }
+    else if (gpio == BTN_OUTPUT)
+    {
+        startPlayback();
+    }
+
+    // Disable Button
+    buttonRegister = false;
+    // Timer to reenable button
+    add_alarm_in_ms(250, reeanbleButtons, NULL, false);
 }
 
-// Example function with two integer inputs and an integer return value
-int example_function(int a, int b) {
-    int result = a + b;
-    printf("example_function: %d + %d = %d\n", a, b, result);
-    return result;
+bool addChar(char toAdd)
+{
+    if (currIndex > maxIndex)
+        return false;
+    else
+    {
+        state[currIndex] = toAdd;
+        currIndex += 1;
+        return true;
+    }
+}
+void setLED(uint gpio, char toPrint)
+{   
+    if (toPrint == '-')
+        setPWMDutyCycle(gpio, LOW_DUTY_CYCLE);
+    else if (toPrint == '.')
+        setPWMDutyCycle(gpio, 1.f);
+}
+
+void startPlayback()
+{
+    if (!playback)
+    {
+        playback = true;
+        renderIndex = 0;
+        printf(">> Code Playback Start\n");
+    }
+}
+void mainloop()
+{
+    if (playback)
+    {
+        uint gpio = led[renderIndex];
+        char gpio_state = state[renderIndex];
+        if (gpio_state == '-')
+        {
+            setLED(gpio, gpio_state);
+            printf("Dash at [%d]\n", renderIndex);
+        }
+        else if (gpio_state == '.')
+        {
+            setLED(gpio, gpio_state);
+            printf("Dot at [%d]\n", renderIndex);
+        }
+        else
+        {
+            playback = false;
+            printf(">> Code Playback End\n");
+            for (int i = 0; i <= maxIndex; ++i)
+            {
+                uint gpio = led[i];
+                setPWMDutyCycle(gpio, 0.f);
+                // state[i] = ' ';
+            }
+            currIndex = 0;
+        }
+        renderIndex += 1;
+
+        sleep_ms(1000);
+    }
+}
+
+int64_t reeanbleButtons(alarm_id_t id, void *user_data) 
+{
+    // Reset the interrupt.
+    buttonRegister = true;
+    return 0;
 }

@@ -2,6 +2,7 @@
 #include "wheels.h"
 #include "network.h"
 #include "ultrasonic.h"
+#include "ir_sensor.h"
 
 #define RECIEVER_UDP_PORT 4444
 
@@ -16,59 +17,70 @@ void handleUltrasonic();
 void changeState(uint8_t nextState)
 {
     currState = nextState;
+    send_udp_data("CHANGE STATE\n", PORT_DASHBOARD, IP_DASHBOARD);
     switch (nextState)
     {
-        case STATE_INITIAL:
-            break;
-        case STATE_CONNECTING:
-            break;
-        case STATE_REMOTE:
-            break;
-        case STATE_AUTO:
-            break;
-        case STATE_END:
-            deinit_server();
-            break;
-        default:
-            printf("ヤバイ\n");
-            break;
+    case STATE_INITIAL:
+        break;
+    case STATE_CONNECTING:
+        break;
+    case STATE_REMOTE:
+        break;
+    case STATE_AUTO:
+        set_car_state(CAR_FORWARD);
+        set_wheels_duty_cycle(0.5f);
+        break;
+    case STATE_END:
+        deinit_server();
+        break;
+    default:
+        printf("ヤバイ\n");
+        break;
     }
 }
+
+uint8_t getState()
+{
+    return currState;
+}
+
 void updateCore0()
 {
     while (true)
     {
-        movement_data_t * movementData = NULL; 
+        movement_data_t *movementData = NULL;
 
         switch (currState)
         {
-            case STATE_INITIAL:
-                break;
-            case STATE_CONNECTING:
-                if (connect_to_wifi())
-                {
-                    changeState(STATE_REMOTE);
-                    init_udp_server_reciever(RECIEVER_UDP_PORT);
-                    init_udp_server_sender(IP_DASHBOARD);
-                }
-                else 
-                {
-                    printf("Connection failed. Press button 21 to try again.\n");
-                    changeState(STATE_INITIAL);
-                }
-                break;
-            case STATE_REMOTE:
-                movementData = get_movement_data();
-                handleUltrasonic();
-                handleControls(movementData);
-                break;
-            case STATE_AUTO:
-                break;
-            case STATE_END:
-                break;
-            default:
-                printf("ヤバイ\n");
-                break;
+        case STATE_INITIAL:
+            break;
+        case STATE_CONNECTING:
+            if (connect_to_wifi())
+            {
+                changeState(STATE_REMOTE);
+                init_udp_server_reciever(RECIEVER_UDP_PORT);
+                init_udp_server_sender(IP_DASHBOARD);
+            }
+            else
+            {
+                printf("Connection failed. Press button 21 to try again.\n");
+                changeState(STATE_INITIAL);
+            }
+            break;
+        case STATE_REMOTE:
+            movementData = get_movement_data();
+            handleUltrasonic();
+            handleControls(movementData);
+            break;
+        case STATE_AUTO:
+            handle_barcode();
+            handle_line_tracing(&set_car_state);
+            break;
+        case STATE_END:
+            break;
+        default:
+            printf("ヤバイ\n");
+            break;
         }
     }
 }
@@ -76,8 +88,7 @@ void updateCore1()
 {
     while (true)
     {
-        printf("here\n");
-        send_udp_data("hello", PORT_DASHBOARD, IP_DASHBOARD);
+        // send_udp_data("hello", PORT_DASHBOARD, IP_DASHBOARD);
     }
 }
 
@@ -88,14 +99,14 @@ void handleControls(movement_data_t *movementData)
     else
     {
         // starting duty cycle not representative of duty cycle required to move
-        float minimumDutyCycle = 0.4f;
-        float remainder = 0.6f;
+        float minimumDutyCycle = 0.55f;
+        float remainder = 0.45f;
         // ははは この授業は凄く楽しいです
         // 皮肉じゃないよ
         // You can only move forward/backward or turn.
         // You cannot turn while going forward/backward. Why? Because I give up, that's why.
         if (movementData->forward_direction == 'F')
-        {  
+        {
             if (!tooClose)
             {
                 set_car_state(CAR_FORWARD);
@@ -104,7 +115,7 @@ void handleControls(movement_data_t *movementData)
                 pid_right.enabled = true;
             }
             else
-            {   
+            {
                 set_car_state(CAR_STATIONARY);
                 pid_right.enabled = false;
             }
@@ -115,6 +126,10 @@ void handleControls(movement_data_t *movementData)
             float dutyCycle = minimumDutyCycle + remainder * movementData->forward_percentage;
             set_wheels_duty_cycle(dutyCycle);
             pid_right.enabled = true;
+        }
+        else if (movementData->forward_direction == 'T')
+        {
+            changeState(STATE_AUTO);
         }
         else
         {
@@ -149,7 +164,7 @@ void handleUltrasonic()
             tooClose = true;
         else
             tooClose = false;
-        
+
         ultrasonicLastCheckTime = currentTime;
     }
 }

@@ -10,14 +10,15 @@
 #include "accelerometer.h"
 
 #define IP_CAR "192.168.18.90"
-#define IP_DASHBOARD "192.168.18.176"
+#define IP_DASHBOARD "192.168.18.225"
 #define PORT_CAR 4444
 #define PORT_DASHBOARD 4445
 
 extern char wifi_ssid[];
 extern char wifi_pwd[];
 
-typedef struct {
+typedef struct
+{
     char device_name[32];
     char forward_direction;
     float forward_percentage;
@@ -36,7 +37,7 @@ void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const 
 movement_data_t *get_movement_data(void);
 
 // FOR UDP CLIENT
-struct udp_pcb* init_udp_server_sender(const char* IP);
-void send_udp_data(const char* data, uint16_t udp_port, const char* IP);
+struct udp_pcb *init_udp_server_sender(const char *IP);
+void send_udp_data(const char *data, uint16_t udp_port, const char *IP);
 
 #endif

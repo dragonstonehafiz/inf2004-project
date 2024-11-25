@@ -13,12 +13,13 @@ enum STATES_FINAL
     STATE_AUTO,
     STATE_END,
     STATE_SERVER_ERROR,
-    
+
     STATE_NUM
 };
 
 void changeState(uint8_t nextState);
 void updateCore0();
 void updateCore1();
+uint8_t getState();
 
 #endif
