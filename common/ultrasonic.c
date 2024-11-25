@@ -22,8 +22,8 @@ static alarm_id_t timeout_alarm_id;
 // Kalman filter variables
 static float distance_estimate = 0.0;
 static float kalman_gain = 0.6;
-static float process_noise = 0.1;
-static float measurement_noise = 0.3;
+static float process_noise = 0.25;
+static float measurement_noise = 0.4;
 
 // Variables used for automatic timer
 struct repeating_timer ultrasonicTimer;
