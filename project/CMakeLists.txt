@@ -10,6 +10,7 @@ if (NOT PICO_NO_HARDWARE)
         include(FreeRTOS_Kernel_import.cmake)
         add_subdirectory(main)
         add_subdirectory(controller)
+        add_subdirectory(dashboard)
     endif()
 endif()
 
