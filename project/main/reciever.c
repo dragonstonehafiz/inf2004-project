@@ -14,8 +14,8 @@ static movement_data_t movement_data = {"unknown", 'N', 0.0f, 'N', 0.0f};
 // Global variable to see if new data received
 static bool new_data_received = false;
 
-char wifi_ssid[] = "SINGTEL-WWY2";
-char wifi_pwd[] = "fefkxa7v34";
+char wifi_ssid[] = "bighowdy";
+char wifi_pwd[] = "yeedyourlasthaw";
 
 // Putting declarations here so outside classes don't see things they shouldn't use
 void init_udp_server();
@@ -58,14 +58,12 @@ int init_server()
     cyw43_arch_enable_sta_mode();
     return 1;
 }
-
 int deinit_server()
 {
     cyw43_arch_deinit();
     return 1;
 }
-
-int connect_to_wifi()
+int connect_to_wifi_car()
 {
     // Connect to WiFi
     int retry_count = 0;

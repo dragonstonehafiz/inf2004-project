@@ -43,7 +43,7 @@ void updateCore0()
             case STATE_INITIAL:
                 break;
             case STATE_CONNECTING:
-                connect_to_wifi();
+                connect_to_wifi_car();
                 break;
             case STATE_REMOTE:
                 movementData = get_movement_data();
@@ -123,9 +123,9 @@ void handleControls(movement_data_t *movementData)
             // We won't need pid when turning
             pid_right.enabled = false;
             reset_pid();
-            if (movementData->turn_direction == 'R')
+            if (movementData->turn_direction == 'R' && !tooClose)
                 set_car_state(CAR_TURN_RIGHT);
-            else if (movementData->turn_direction == 'L')
+            else if (movementData->turn_direction == 'L' && !tooClose)
                 set_car_state(CAR_TURN_LEFT);
             else
                 set_car_state(CAR_STATIONARY);

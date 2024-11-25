@@ -12,7 +12,7 @@
 // Define constants
 #define UDP_PORT 4444
 #define BEACON_MSG_LEN_MAX 127
-#define BEACON_TARGET "192.168.1.115"
+#define BEACON_TARGET "192.168.18.90"
 #define BEACON_INTERVAL_MS 10
 #define WIFI_CONNECT_TIMEOUT_MS 10000
 #define MAX_WIFI_RETRIES 3
@@ -25,8 +25,8 @@ struct udp_pcb* initialize_udp(void);
 void send_udp_data(const char* data);
 bool connect_to_wifi();
 
-char wifi_ssid[] = "SINGTEL-WWY2";
-char wifi_pwd[] = "fefkxa7v34";
+char wifi_ssid[] = "bighowdy";
+char wifi_pwd[] = "yeedyourlasthaw";
 
 // Function implementations
 struct udp_pcb* initialize_udp() {

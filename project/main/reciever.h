@@ -14,4 +14,4 @@ void print_movement_data(movement_data_t * movement_data);
 
 int init_server();
 int deinit_server();
-int connect_to_wifi();
+int connect_to_wifi_car();

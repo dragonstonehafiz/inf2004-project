@@ -20,6 +20,7 @@ target_link_libraries(
     common_lib
     pico_stdlib 
     hardware_pwm
+    pico_cyw43_arch_lwip_threadsafe_background
     )
 
 target_include_directories(common_lib PUBLIC ${CMAKE_CURRENT_LIST_DIR})
