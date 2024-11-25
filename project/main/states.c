@@ -3,13 +3,18 @@
 #include "network.h"
 #include "ultrasonic.h"
 #include "ir_sensor.h"
+#include "encoder.h"
 
 #define RECIEVER_UDP_PORT 4444
+#define MESSAGE_BUFFER_SIZE 128
 
 volatile uint8_t currState;
 // set to true if ultrasonic sees something that is <10cm
 volatile bool tooClose = false;
 volatile uint64_t ultrasonicLastCheckTime;
+float lastUltrasonicDistance;
+// Last time a message was sent to the dashboard
+uint64_t lastMessageSentTime = 1;
 
 void handleControls(movement_data_t *movementData);
 void handleUltrasonic();
@@ -86,9 +91,33 @@ void updateCore0()
 }
 void updateCore1()
 {
+    char message[MESSAGE_BUFFER_SIZE]; // Character buffer for the message
     while (true)
     {
-        // send_udp_data("hello", PORT_DASHBOARD, IP_DASHBOARD);
+        uint64_t now = time_us_64();
+        // Send a message every 1 microsecond
+        if (now - lastMessageSentTime > 1000000)
+        {
+            switch (currState)
+            {
+            case STATE_INITIAL:
+            case STATE_CONNECTING:
+                break;
+            case STATE_REMOTE:
+                snprintf(message, MESSAGE_BUFFER_SIZE, "Ultrasonic Distance: %.2f", lastUltrasonicDistance);
+                send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
+                snprintf(message, MESSAGE_BUFFER_SIZE, "Left Wheel Distance: %.2f, Right Wheel Distance", leftTotalDistance, rightTotalDistance);
+                send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
+                break;
+            case STATE_AUTO:
+                snprintf(message, MESSAGE_BUFFER_SIZE, "Ultrasonic Distance: %.2f", lastUltrasonicDistance);
+                send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
+                break;
+            default:
+                break;
+            }
+            lastMessageSentTime = now;
+        }
     }
 }
 
@@ -158,9 +187,9 @@ void handleUltrasonic()
 
         sleep_ms(30);
 
-        float calculatedDist = getCm();
+        lastUltrasonicDistance = getCm();
         // printf("calculatedDist: %.2f\n", calculatedDist);
-        if (calculatedDist <= 25.f && calculatedDist >= 0.f)
+        if (lastUltrasonicDistance <= 25.f && lastUltrasonicDistance >= 0.f)
             tooClose = true;
         else
             tooClose = false;

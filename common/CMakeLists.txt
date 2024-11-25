@@ -2,18 +2,11 @@
 set(target common_lib)
 
 add_library(common_lib
-        accelerometer.h
         accelerometer.c
-        encoder.h
         encoder.c
-        motor.h
         motor.c
         ultrasonic.c
-        ultrasonic.h
-        wheels.h
         wheels.c
-        pins.h
-        network.h
         network.c
         ir_sensor.c 
         code39_decoder.c

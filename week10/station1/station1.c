@@ -12,7 +12,7 @@
 #define BUTTON_DELAY 1000
 #define DUTY_CYCLE 0.75
 
-/// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts) 
+/// @brief this function can be called for changing state (so I don't have to rewrite the code in different parts)
 void change_state(uint8_t next_state);
 // Variables for tracking what step of the test we are at
 enum STATION_1_STATE
@@ -28,14 +28,14 @@ uint8_t station1_state = STATION_1_IDLE;
 
 // Timer variables and functions to manage polling of devices
 struct repeating_timer ultrasonic_timer;
-/// @brief checks the distance to the object in front of the car. If less than 10, stop 
+/// @brief checks the distance to the object in front of the car. If less than 10, stop
 bool ultrasonic_sensor_callback(struct repeating_timer *t);
 
 /// @brief only register button press after set time. This is so force applied doesn't affect wheels
-int64_t buttonDelayCallback(alarm_id_t id, void* user_data);
+int64_t buttonDelayCallback(alarm_id_t id, void *user_data);
 
 // For turning task
-// This is how much the left wheel needs to turn when 
+// This is how much the left wheel needs to turn when
 float distToTravel = 0.f;
 
 void change_state(uint8_t next_state)
@@ -44,51 +44,51 @@ void change_state(uint8_t next_state)
     set_wheels_duty_cycle(0.f);
     switch (next_state)
     {
-        case STATION_1_IDLE:
-            set_car_state(CAR_STATIONARY);
-            set_wheels_duty_cycle(0.f);
-            break;
-        case STATION_1_FIRST_PART:
-            // Move the car forward at max speed
-            set_car_state(CAR_FORWARD);
-            // Also reset pid variables so previous values don't carry over
-            reset_pid();
-            // Enable pid so right wheel matches left wheel speed
-            pid_right.enabled = true;
-            set_wheels_duty_cycle(DUTY_CYCLE);
-            break;
-        case STATION_1_TURN_IDLE:
-            // Move the car forward at max speed
-            set_car_state(CAR_STATIONARY);
-            set_wheels_duty_cycle(0.f);
-            // This won't affect anything that happens since car is already set to stationary
-            // However, this does prevent the pid code from being run
-            pid_right.enabled = false;
-            break;
-        case STATION_1_TURN:
-            set_car_state(CAR_TURN_RIGHT);
-            // Setting to 0.75f because its accurate but not slow
-            set_wheels_duty_cycle(0.6f);
-            distToTravel = ((float)ANGLE_TO_TURN / 360.f) * FULL_ROTATION_CIRCUMFERENCE;
-            resetEncoder();
-            break;
-        case STATION_1_90_CM_IDLE:
-            set_car_state(CAR_STATIONARY);
-            set_wheels_duty_cycle(0.f);
-            pid_right.enabled = false;
-            break;
-        case STATION_1_90_CM:
-            set_car_state(CAR_FORWARD);
-            distToTravel = 90;
-            resetEncoder();
+    case STATION_1_IDLE:
+        set_car_state(CAR_STATIONARY);
+        set_wheels_duty_cycle(0.f);
+        break;
+    case STATION_1_FIRST_PART:
+        // Move the car forward at max speed
+        set_car_state(CAR_FORWARD);
+        // Also reset pid variables so previous values don't carry over
+        reset_pid();
+        // Enable pid so right wheel matches left wheel speed
+        pid_right.enabled = true;
+        set_wheels_duty_cycle(DUTY_CYCLE);
+        break;
+    case STATION_1_TURN_IDLE:
+        // Move the car forward at max speed
+        set_car_state(CAR_STATIONARY);
+        set_wheels_duty_cycle(0.f);
+        // This won't affect anything that happens since car is already set to stationary
+        // However, this does prevent the pid code from being run
+        pid_right.enabled = false;
+        break;
+    case STATION_1_TURN:
+        set_car_state(CAR_TURN_RIGHT);
+        // Setting to 0.75f because its accurate but not slow
+        set_wheels_duty_cycle(0.6f);
+        distToTravel = ((float)ANGLE_TO_TURN / 360.f) * FULL_ROTATION_CIRCUMFERENCE;
+        resetEncoder();
+        break;
+    case STATION_1_90_CM_IDLE:
+        set_car_state(CAR_STATIONARY);
+        set_wheels_duty_cycle(0.f);
+        pid_right.enabled = false;
+        break;
+    case STATION_1_90_CM:
+        set_car_state(CAR_FORWARD);
+        distToTravel = 90;
+        resetEncoder();
 
-            // Also reset pid variables so previous values don't carry over
-            reset_pid();
-            // Enable pid so right wheel matches left wheel speed
-            pid_right.enabled = true;
-            // Move the car forward at max speed
-            set_wheels_duty_cycle(DUTY_CYCLE);
-            break;
+        // Also reset pid variables so previous values don't carry over
+        reset_pid();
+        // Enable pid so right wheel matches left wheel speed
+        pid_right.enabled = true;
+        // Move the car forward at max speed
+        set_wheels_duty_cycle(DUTY_CYCLE);
+        break;
     }
 }
 
@@ -96,24 +96,24 @@ void init_gpio();
 void init_interrupts();
 void irq_handler(uint gpio, uint32_t events);
 
-int main() 
+int main()
 {
     init_gpio();
     init_interrupts();
     change_state(STATION_1_IDLE);
 
     uint64_t last_distance_check_time = time_us_64();
-    while (true) 
+    while (true)
     {
         uint64_t current_time = time_us_64();
         uint64_t timediff = current_time - last_distance_check_time;
 
-        if (timediff > 100 * 1000 && 
+        if (timediff > 100 * 1000 &&
             station1_state == STATION_1_FIRST_PART)
         {
-            triggerPulse();  // Initiate the pulse to start the measurement
+            triggerPulse(); // Initiate the pulse to start the measurement
 
-            sleep_ms(30);  // Small delay to ensure echo is received if object is close
+            sleep_ms(30); // Small delay to ensure echo is received if object is close
             float distance_to_item = getCm();
 
             printf("Distance to item: %.2f\n", distance_to_item);
@@ -126,7 +126,7 @@ int main()
     return 1;
 }
 
-void init_gpio() 
+void init_gpio()
 {
     stdio_init_all();
     init_wheels();
@@ -145,9 +145,7 @@ void irq_handler(uint gpio, uint32_t events)
     if (gpio == BTN_START)
         add_alarm_in_ms(BUTTON_DELAY, buttonDelayCallback, NULL, false);
     else if (gpio == WHEEL_ENCODER_RIGHT_PIN)
-    {
         encoderCallback(gpio, events);
-    }
     else if (gpio == WHEEL_ENCODER_LEFT_PIN)
     {
         encoderCallback(gpio, events);
@@ -180,14 +178,14 @@ bool ultrasonic_sensor_callback(struct repeating_timer *t)
         if (distance_to_item <= 10.f && distance_to_item > 0.0f)
             change_state(STATION_1_TURN);
     }
-    else 
+    else
     {
         // Realistically, we should never come here, but just to be safe...
         cancel_repeating_timer(&ultrasonic_timer);
     }
     return true;
 }
-int64_t buttonDelayCallback(alarm_id_t id, void* user_data)
+int64_t buttonDelayCallback(alarm_id_t id, void *user_data)
 {
     if (station1_state == STATION_1_IDLE)
         change_state(STATION_1_FIRST_PART);

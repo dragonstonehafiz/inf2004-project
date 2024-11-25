@@ -46,8 +46,8 @@ int decode_code39_sequence(int64_t widths[], char *output)
 
     if (start_char != '*')
     {
-        printf("Invalid start character. %c\n", start_char);
-        // send_udp_data(&start_char, PORT_DASHBOARD, IP_DASHBOARD);
+        // printf("Invalid start character. %c\n", start_char);
+        send_udp_data(&start_char, PORT_DASHBOARD, IP_DASHBOARD);
         return 0;
     }
 
@@ -55,8 +55,8 @@ int decode_code39_sequence(int64_t widths[], char *output)
     output[output_index++] = decoded_char;
 
     output[output_index] = '\0'; // Null-terminate the output string
-    // send_udp_data(output, PORT_DASHBOARD, IP_DASHBOARD);
-    printf("Output: %s\n", output);
+    send_udp_data(output, PORT_DASHBOARD, IP_DASHBOARD);
+    // printf("Output: %s\n", output);
     return 1; // Return true if decoding succeeds
 }
 
@@ -79,7 +79,7 @@ int decode_with_direction_check(int64_t *widths)
     // Try decoding in normal order
     if (decode_code39_sequence(widths, decoded_normal))
     {
-        printf("Decoded barcode (Normal): %s\n", decoded_normal);
+        // printf("Decoded barcode (Normal): %s\n", decoded_normal);
         send_udp_data(decoded_normal, PORT_DASHBOARD, IP_DASHBOARD);
         return 1;
     }
@@ -89,7 +89,7 @@ int decode_with_direction_check(int64_t *widths)
 
     if (decode_code39_sequence(widths, decoded_reversed))
     {
-        printf("Decoded barcode (Reversed): %s\n", decoded_reversed);
+        // printf("Decoded barcode (Reversed): %s\n", decoded_reversed);
         send_udp_data(decoded_reversed, PORT_DASHBOARD, IP_DASHBOARD);
         return 1;
     }

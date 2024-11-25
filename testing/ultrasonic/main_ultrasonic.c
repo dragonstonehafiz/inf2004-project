@@ -23,9 +23,9 @@ int main()
         // Check the distance at the specified interval
         if (current_time - last_distance_check_time > CHECK_INTERVAL_MS * 1000)
         {
-            triggerPulse();  // Initiate the pulse to start the measurement
+            triggerPulse(); // Initiate the pulse to start the measurement
 
-            sleep_ms(30);  // Small delay to ensure echo is received if object is close
+            sleep_ms(30); // Small delay to ensure echo is received if object is close
             float distanceCm = getCm();
 
             if (distanceCm == -1.0)
