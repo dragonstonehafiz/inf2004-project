@@ -49,10 +49,6 @@ int main()
 
     while (connected)
     {
-        // Check button state
-        bool current_button_state = gpio_get(CONTROLLER_BUTTON_PIN);
-        bool auto_button_state = gpio_get(AUTO_BUTTON_PIN);
-
         // Only send messages if not in auto
         if (is_sending && !is_auto)
         {

@@ -10,7 +10,7 @@
 #include "accelerometer.h"
 
 #define IP_CAR "192.168.18.90"
-#define IP_DASHBOARD "192.168.18.225"
+#define IP_DASHBOARD "192.168.18.176"
 #define PORT_CAR 4444
 #define PORT_DASHBOARD 4445
 

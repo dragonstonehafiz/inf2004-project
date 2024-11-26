@@ -78,6 +78,7 @@ void updateCore0()
             handleControls(movementData);
             break;
         case STATE_AUTO:
+            handleUltrasonic();
             handle_barcode();
             handle_line_tracing(&set_car_state);
             break;
@@ -106,7 +107,7 @@ void updateCore1()
             case STATE_REMOTE:
                 snprintf(message, MESSAGE_BUFFER_SIZE, "Ultrasonic Distance: %.2f", lastUltrasonicDistance);
                 send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
-                snprintf(message, MESSAGE_BUFFER_SIZE, "Left Wheel Distance: %.2f, Right Wheel Distance", leftTotalDistance, rightTotalDistance);
+                snprintf(message, MESSAGE_BUFFER_SIZE, "Left Wheel Distance: %.2f, Right Wheel Distance: %.2f", leftTotalDistance, rightTotalDistance);
                 send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
                 break;
             case STATE_AUTO:

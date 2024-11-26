@@ -44,10 +44,13 @@ int decode_code39_sequence(int64_t widths[], char *output)
 
     char start_char = decode_code39_character(&pattern[0], BYTES_LENGTH);
 
+    char message[128]; // Character buffer for the message
+    snprintf(message, 128, "%c", start_char);
+    send_udp_data(message, PORT_DASHBOARD, IP_DASHBOARD);
     if (start_char != '*')
     {
         // printf("Invalid start character. %c\n", start_char);
-        send_udp_data(&start_char, PORT_DASHBOARD, IP_DASHBOARD);
+        // send_udp_data(&start_char, PORT_DASHBOARD, IP_DASHBOARD);
         return 0;
     }
 
@@ -55,7 +58,6 @@ int decode_code39_sequence(int64_t widths[], char *output)
     output[output_index++] = decoded_char;
 
     output[output_index] = '\0'; // Null-terminate the output string
-    send_udp_data(output, PORT_DASHBOARD, IP_DASHBOARD);
     // printf("Output: %s\n", output);
     return 1; // Return true if decoding succeeds
 }
@@ -72,7 +74,7 @@ void reverse_widths(int64_t *widths, int length)
 
 int decode_with_direction_check(int64_t *widths)
 {
-    // print_bar_space_widths(widths, MAX_BARCODE_LENGTH);
+    print_bar_space_widths(widths, MAX_BARCODE_LENGTH);
     char decoded_normal[2];
     char decoded_reversed[2];
 
